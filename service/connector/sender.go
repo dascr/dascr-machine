@@ -44,19 +44,29 @@ func (c *Service) sendToScoreboard(url, method string) (*http.Response, error) {
 
 func (c *Service) throw(matrix string) {
 	url := fmt.Sprintf("throw/%+v", matrix)
-	_, _ = c.sendToScoreboard(url, "post")
+	_, err := c.sendToScoreboard(url, "post")
+	if err != nil {
+		log.Printf("Error when sending nextPlayer: %+v", err)
+	}
 }
 
 func (c *Service) nextPlayer() {
 	url := ("nextPlayer")
-	_, _ = c.sendToScoreboard(url, "post")
+	_, err := c.sendToScoreboard(url, "post")
+	if err != nil {
+		log.Printf("Error when sending nextPlayer: %+v", err)
+	}
+
 	// Write 4 to serial to set bUltrasonicThresholdMeasured false
 	c.Write("4")
 }
 
 func (c *Service) rematch() {
 	url := ("rematch")
-	_, _ = c.sendToScoreboard(url, "post")
+	_, err := c.sendToScoreboard(url, "post")
+	if err != nil {
+		log.Printf("Error when sending nextPlayer: %+v", err)
+	}
 }
 
 func (c *Service) buttonOn() {
@@ -68,6 +78,7 @@ func (c *Service) buttonOff() {
 }
 
 func (c *Service) updateStatus() {
+	log.Println("Updating game state")
 	url := "display"
 	resp, err := c.sendToScoreboard(url, "get")
 	if err != nil {
@@ -75,4 +86,5 @@ func (c *Service) updateStatus() {
 		return
 	}
 	json.NewDecoder(resp.Body).Decode(&c.State)
+	log.Printf("game state in update function: %+v", c.State)
 }

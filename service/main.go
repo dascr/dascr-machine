@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
-	"time"
 
 	"github.com/dascr/dascr-machine/service/config"
 	"github.com/dascr/dascr-machine/service/connector"
@@ -43,9 +42,8 @@ func main() {
 
 	// Setup Connector service
 	connector.Serv.Config = &serial.Config{
-		Name:        config.Config.Machine.Serial,
-		Baud:        9600,
-		ReadTimeout: time.Second * 2,
+		Name: config.Config.Machine.Serial,
+		Baud: 9600,
 	}
 
 	go func() {

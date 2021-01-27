@@ -70,7 +70,7 @@ void CheckButton() {
   // Wenn gedrückt Ausgabe
   if (iButtonState == LOW) {
     Serial.println("b");
-    delay(100);
+    delay(500);
   }
 }
 
@@ -88,7 +88,7 @@ void EvalThrow() {
       bI[x][y]  = digitalRead(PI_[y]);
       if (bI[x][y] == 0) {
         Serial.println(MATRIX_VALUES[x][y]);
-        delay(100);
+        delay(300);
         bHitDetected = true;
         // Set Bull to 0
         bI[1][10] = 1;
@@ -113,7 +113,7 @@ void CheckMissed() {
 
   if (!bHitDetected && bMissedDart) {
     Serial.println("m");
-    delay(100);
+    delay(300);
   }
 }
 

@@ -30,6 +30,7 @@ type Service struct {
 	Running       bool
 	Quit          chan int
 	State         Game
+	Scanner       *bufio.Scanner
 }
 
 // Start will start the connector service
@@ -66,12 +67,16 @@ func (c *Service) Start() error {
 		if err != nil {
 			return err
 		}
+		log.Printf("Connected to websocket @ %+v", u.String())
 
 		// Connect via serial
 		c.Conn, err = serial.OpenPort(c.Config)
 		if err != nil {
 			return err
 		}
+		c.Scanner = bufio.NewScanner(c.Conn)
+
+		log.Println("Serial connection initiated")
 
 		// Write 7 to blink 7 times to serial
 		c.Conn.Write([]byte("7\n"))
@@ -132,17 +137,12 @@ func (c *Service) Write(input string) {
 
 // Read will read from the serial connection
 func (c *Service) Read() string {
-	var cmd string
-
-	scanner := bufio.NewScanner(c.Conn)
-	for scanner.Scan() {
-		cmd = scanner.Text()
-	}
-
-	return cmd
+	c.Scanner.Scan()
+	return c.Scanner.Text()
 }
 
 func (c *Service) mainLoop() {
+	log.Println("Started main machine loop")
 	// Fetch initial state from backend
 	c.updateStatus()
 
@@ -153,6 +153,8 @@ func (c *Service) mainLoop() {
 			return
 		default:
 		}
+
+		log.Printf("Gamestate is now: %+v", c.State.State)
 
 		// State machine
 		switch c.State.State {
@@ -176,18 +178,15 @@ func (c *Service) mainLoop() {
 
 			// Check if the cmd is in the matrixMap
 			if v, ok := matrixMap[cmd]; ok {
-				log.Println("Hitting throw")
 				// Send throw
 				c.throw(v)
 			} else {
 				// Else switch over cmd
 				switch cmd {
 				case "m":
-					log.Println("Hitting missed")
 					// missed dart
 					c.throw("0/1")
 				case "b":
-					log.Println("Hitting button")
 					// button pressed
 					if c.State.State == "WON" {
 						c.rematch()
@@ -195,7 +194,6 @@ func (c *Service) mainLoop() {
 						c.nextPlayer()
 					}
 				case "u":
-					log.Println("Hitting ultrasonic")
 					// ultrasonic movement
 					// Write movement to serial and apply wait delay
 					c.Write("3")
