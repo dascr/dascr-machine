@@ -107,12 +107,21 @@ func (ws *WebServer) updateScoreboard(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	https := r.FormValue("sbprot") != ""
+	if config.Config.Scoreboard.HTTPS != https {
+		config.Config.Scoreboard.HTTPS = https
+	}
+
 	if config.Config.Scoreboard.Host != r.FormValue("sbhost") {
 		config.Config.Scoreboard.Host = r.FormValue("sbhost")
 	}
 
 	if config.Config.Scoreboard.Port != r.FormValue("sbport") {
 		config.Config.Scoreboard.Port = r.FormValue("sbport")
+	}
+
+	if config.Config.Scoreboard.Game != r.FormValue("sbgame") {
+		config.Config.Scoreboard.Game = r.FormValue("sbgame")
 	}
 
 	err = config.SaveConfig()

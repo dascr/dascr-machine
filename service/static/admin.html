@@ -23,11 +23,21 @@
     <div id="scoreboard">
         <h4>Scoreboard config</h4>
         <form action="updateScoreboard" method="POST">
+            <label for="sbprot">Use HTTPS</label>
+            {{ if .Scoreboard.HTTPS }}
+            <input id="sbprot" name="sbprot" type="checkbox" value="https" checked />
+            {{ else }}
+            <input id="sbprot" name="sbprot" type="checkbox" value="https" />
+            {{ end }}
+
             <label for="sbhost">Scoreboard host ip</label>
             <input id="sbhost" name="sbhost" type="text" value="{{.Scoreboard.Host}}" />
 
             <label for="sbport">Scoreboard port</label>
             <input id="sbport" name="sbport" type="number" value="{{.Scoreboard.Port}}" />
+
+            <label for="sbgame">Scoreboard Game ID</label>
+            <input id="sbgame" name="sbgame" type="text" value="{{.Scoreboard.Game}}" />
 
             <button type="submit">Save</button>
         </form>

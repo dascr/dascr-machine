@@ -153,6 +153,8 @@ void ProcessSerial() {
     bMotionDetected = true;
   } else if (sInputString.indexOf("4") != -1) {
     bUltrasonicThresholdMeasured = false;
+  } else if (sInputString.indexOf("7") != -1) {
+    Blink(7);
   }
   sInputString = "";
   bStringComplete = false;

@@ -11,11 +11,13 @@ var (
 	def = Settings{
 		Machine: MachineConfig{
 			WaitingTime: 5,
-			Serial:      "ttyAMC0",
+			Serial:      "ttyACM0",
 		},
 		Scoreboard: ScoreboardConfig{
-			Host: "127.0.0.1",
-			Port: "8000",
+			HTTPS: false,
+			Host:  "127.0.0.1",
+			Port:  "8000",
+			Game:  "dascr",
 		},
 	}
 	// Read config file
@@ -40,8 +42,10 @@ type MachineConfig struct {
 // ScoreboardConfig will hold the config of the scoreboard
 // to send to
 type ScoreboardConfig struct {
-	Host string `json:"host"`
-	Port string `json:"port"`
+	HTTPS bool   `json:"https"`
+	Host  string `json:"host"`
+	Port  string `json:"port"`
+	Game  string `json:"game"`
 }
 
 // Init will read config from file or create default config
