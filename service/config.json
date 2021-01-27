@@ -1,7 +1,7 @@
 {
     "machine": {
-        "wait": 5,
-        "serial": "ttyACM0"
+        "wait": 6,
+        "serial": "/dev/ttyACM0"
     },
     "scoreboard": {
         "https": false,

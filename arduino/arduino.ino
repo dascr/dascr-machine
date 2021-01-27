@@ -22,7 +22,7 @@ const int PI_[16] = { 26, 28, 30, 32, 34, 36, 38, 40, 42, 44, 46, 48, 50, 52, 53
 // Matrix Values
 // 120 = single 20, 220 = double 20, 320 = triple 20
 // 125 = single Bull, 225 = double bull
-const int FAKTOR_WERTE[4][16]={
+const int MATRIX_VALUES[4][16]={
   {212, 112, 209, 109, 214, 114, 211, 111, 208, 108, 000, 312, 309, 314, 311, 308},
   {216, 116, 207, 107, 219, 119, 203, 103, 217, 117, 225, 316, 307, 319, 303, 317},
   {202, 102, 215, 115, 210, 110, 206, 106, 213, 113, 125, 302, 315, 310, 306, 313},
@@ -70,7 +70,7 @@ void CheckButton() {
   // Wenn gedrückt Ausgabe
   if (iButtonState == LOW) {
     Serial.println("b");
-    delay(500);
+    delay(100);
   }
 }
 
@@ -87,8 +87,8 @@ void EvalThrow() {
     for (int y=0; y<16; y++) {
       bI[x][y]  = digitalRead(PI_[y]);
       if (bI[x][y] == 0) {
-        Serial.println(FAKTOR_WERTE[x][y]);
-        delay(300);
+        Serial.println(MATRIX_VALUES[x][y]);
+        delay(100);
         bHitDetected = true;
         // Set Bull to 0
         bI[1][10] = 1;
@@ -113,7 +113,7 @@ void CheckMissed() {
 
   if (!bHitDetected && bMissedDart) {
     Serial.println("m");
-    delay(200);
+    delay(100);
   }
 }
 
@@ -156,6 +156,7 @@ void ProcessSerial() {
   } else if (sInputString.indexOf("7") != -1) {
     Blink(7);
   }
+  
   sInputString = "";
   bStringComplete = false;
 }

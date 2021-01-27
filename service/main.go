@@ -72,11 +72,13 @@ func main() {
 	ctx, cancel := context.WithTimeout(context.Background(), 15)
 	defer cancel()
 
-	// Stop service
-	ui.Webs.Stop(ctx)
-	connector.Serv.Stop()
-
 	// Output
 	log.Println("Got ctrl+c, shutting down ...")
+
+	// Stop service
+	ui.Webs.Stop(ctx)
+	connector.Serv.Stop(ctx)
+
+	// Exit
 	os.Exit(0)
 }

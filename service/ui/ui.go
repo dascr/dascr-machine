@@ -37,13 +37,18 @@ func (ws *WebServer) Start() error {
 		Handler: mux,
 	}
 	log.Printf("Navigate to http://%+v:%+v/admin to configure your darts machine", ws.IP, ws.Port)
-	log.Panic(ws.HTTPServer.ListenAndServe())
+
+	if err := ws.HTTPServer.ListenAndServe(); err != nil {
+		return err
+	}
+
 	return nil
 }
 
 // Stop will stop the ui webserver
 func (ws *WebServer) Stop(ctx context.Context) {
 	ws.HTTPServer.Shutdown(ctx)
+	log.Println("Webserver stopped")
 }
 
 // Admin route

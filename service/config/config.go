@@ -11,7 +11,7 @@ var (
 	def = Settings{
 		Machine: MachineConfig{
 			WaitingTime: 5,
-			Serial:      "ttyACM0",
+			Serial:      "/dev/ttyACM0",
 		},
 		Scoreboard: ScoreboardConfig{
 			HTTPS: false,

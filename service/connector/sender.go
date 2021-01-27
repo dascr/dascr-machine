@@ -1,32 +1,78 @@
 package connector
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
 )
 
-func (c *Service) sendToScoreboard(url string) {
-	_, err := http.Post(url, "text/plain", nil)
-	if err != nil {
-		log.Printf("Error sending request %+v to scoreboard: %+v", url, err)
-	}
+// Game will hold minimal state to control machine outputs
+type Game struct {
+	State   string `json:"GameState"`
+	Message string `json:"Message"`
 }
 
-func (c *Service) throw(number, modifier int) {
+func (c *Service) sendToScoreboard(url, method string) (*http.Response, error) {
+	var resp *http.Response
+	var err error
+
 	protocol := "http"
 	if c.HTTPS {
 		protocol = "https"
 	}
-	url := fmt.Sprintf("%+v://%+v:%+v/api/game/%+v/throw/%+v/%+v", protocol, c.Host, c.Port, c.Game, number, modifier)
-	c.sendToScoreboard(url)
+
+	target := fmt.Sprintf("%+v://%+v:%+v/api/game/%+v/%+v", protocol, c.Host, c.Port, c.Game, url)
+
+	switch method {
+	case "get":
+		resp, err = http.Get(target)
+		if err != nil {
+			return nil, err
+		}
+	case "post":
+		resp, err = http.Post(target, "text/plain", nil)
+		if err != nil {
+			return nil, err
+		}
+	default:
+		break
+	}
+
+	return resp, nil
+}
+
+func (c *Service) throw(matrix string) {
+	url := fmt.Sprintf("throw/%+v", matrix)
+	_, _ = c.sendToScoreboard(url, "post")
 }
 
 func (c *Service) nextPlayer() {
-	protocol := "http"
-	if c.HTTPS {
-		protocol = "https"
+	url := ("nextPlayer")
+	_, _ = c.sendToScoreboard(url, "post")
+	// Write 4 to serial to set bUltrasonicThresholdMeasured false
+	c.Write("4")
+}
+
+func (c *Service) rematch() {
+	url := ("rematch")
+	_, _ = c.sendToScoreboard(url, "post")
+}
+
+func (c *Service) buttonOn() {
+	c.Write("1")
+}
+
+func (c *Service) buttonOff() {
+	c.Write("2")
+}
+
+func (c *Service) updateStatus() {
+	url := "display"
+	resp, err := c.sendToScoreboard(url, "get")
+	if err != nil {
+		log.Println(err)
+		return
 	}
-	url := fmt.Sprintf("%+v://%+v:%+v/api/game/%+v/nextPlayer", protocol, c.Host, c.Port, c.Game)
-	c.sendToScoreboard(url)
+	json.NewDecoder(resp.Body).Decode(&c.State)
 }
