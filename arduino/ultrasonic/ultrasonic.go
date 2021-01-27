@@ -29,6 +29,7 @@ func (u *Ultrasonic) Configure() {
 
 // ReadDistance reads the distance and returns it in mm
 func (u *Ultrasonic) ReadDistance() int32 {
+	println("Hitting ReadDistance()")
 	pulse := u.ReadPulse()
 
 	return (pulse * 1715) / 10000 // mm
@@ -36,7 +37,9 @@ func (u *Ultrasonic) ReadDistance() int32 {
 
 // ReadPulse will read the pulse of the ultrasonic sensor
 func (u *Ultrasonic) ReadPulse() int32 {
+	println("Hitting ReadPulse()")
 	t := time.Now()
+	println(t.String())
 	u.trigger.Low()
 	time.Sleep(2 * time.Microsecond)
 	u.trigger.High()
@@ -51,6 +54,7 @@ func (u *Ultrasonic) ReadPulse() int32 {
 		i++
 		if i > 10 {
 			if time.Since(t).Microseconds() > timeout {
+				println("Distance timeout")
 				return 0
 			}
 			i = 0
@@ -64,6 +68,7 @@ func (u *Ultrasonic) ReadPulse() int32 {
 		i++
 		if i > 10 {
 			if time.Since(t).Microseconds() > timeout {
+				println("Distance timeout")
 				return 0
 			}
 			i = 0

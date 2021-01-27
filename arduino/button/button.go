@@ -1,6 +1,9 @@
 package button
 
-import "machine"
+import (
+	"machine"
+	"time"
+)
 
 // LEDButton holds the pins
 type LEDButton struct {
@@ -29,10 +32,20 @@ func (lb *LEDButton) ReadButton() bool {
 
 // ButtonLEDOn will turn the buttons LED on
 func (lb *LEDButton) ButtonLEDOn() {
-	lb.led.Low()
+	lb.led.High()
 }
 
 // ButtonLEDOff will turn the buttons LED off
 func (lb *LEDButton) ButtonLEDOff() {
-	lb.led.High()
+	lb.led.Low()
+}
+
+// ButtonLEDBlink will let the button blink
+func (lb *LEDButton) ButtonLEDBlink(times int) {
+	for i := 0; i < times; i++ {
+		lb.led.High()
+		time.Sleep(time.Millisecond * 250)
+		lb.led.Low()
+		time.Sleep(time.Millisecond * 250)
+	}
 }
