@@ -1,8 +1,10 @@
 package piezo
 
-import "machine"
+import (
+	"machine"
+)
 
-const threshold = 20
+const threshold = 1500
 
 // Piezo holds the pins
 type Piezo struct {

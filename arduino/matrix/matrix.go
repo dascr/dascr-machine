@@ -44,7 +44,7 @@ func (m *Matrix) Configure() {
 }
 
 // EvaluateThrow will return the value of the throw if any
-func (m *Matrix) EvaluateThrow() int {
+func (m *Matrix) EvaluateThrow() string {
 	var eval [4][16]bool
 	for i := 0; i < 4; i++ {
 		m.outputs[0].High()
@@ -56,9 +56,9 @@ func (m *Matrix) EvaluateThrow() int {
 		for j := 0; j < 16; j++ {
 			eval[i][j] = m.inputs[j].Get()
 			if !eval[i][j] {
-				return m.values[i][j]
+				return string(m.values[i][j])
 			}
 		}
 	}
-	return -1
+	return "-1"
 }
