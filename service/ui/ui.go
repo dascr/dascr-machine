@@ -27,16 +27,15 @@ type WebServer struct {
 func (ws *WebServer) Start() error {
 	// Setup routing
 	mux := mux.NewRouter()
-	mux.HandleFunc("/admin", ws.admin)
+	mux.HandleFunc("/", ws.admin)
 	mux.HandleFunc("/updateMachine", ws.updateMachine)
 	mux.HandleFunc("/updateScoreboard", ws.updateScoreboard)
-	mux.HandleFunc("/debugSerial", ws.debugSerial)
 	add := fmt.Sprintf("%+v:%+v", ws.IP, ws.Port)
 	ws.HTTPServer = &http.Server{
 		Addr:    add,
 		Handler: mux,
 	}
-	log.Printf("Navigate to http://%+v:%+v/admin to configure your darts machine", ws.IP, ws.Port)
+	log.Printf("Navigate to http://%+v:%+v/ to configure your darts machine", ws.IP, ws.Port)
 
 	if err := ws.HTTPServer.ListenAndServe(); err != nil {
 		return err
@@ -101,7 +100,7 @@ func (ws *WebServer) updateMachine(w http.ResponseWriter, r *http.Request) {
 	connector.Serv.Restart()
 
 	// Redirect back to admin
-	http.Redirect(w, r, "admin", http.StatusSeeOther)
+	http.Redirect(w, r, "/", http.StatusSeeOther)
 }
 
 func (ws *WebServer) updateScoreboard(w http.ResponseWriter, r *http.Request) {
@@ -129,6 +128,14 @@ func (ws *WebServer) updateScoreboard(w http.ResponseWriter, r *http.Request) {
 		config.Config.Scoreboard.Game = r.FormValue("sbgame")
 	}
 
+	if config.Config.Scoreboard.User != r.FormValue("sbuser") {
+		config.Config.Scoreboard.User = r.FormValue("sbuser")
+	}
+
+	if config.Config.Scoreboard.Pass != r.FormValue("sbpass") {
+		config.Config.Scoreboard.Pass = r.FormValue("sbpass")
+	}
+
 	err = config.SaveConfig()
 	if err != nil {
 		log.Printf("Error writing config file after update: %+v", err)
@@ -140,20 +147,5 @@ func (ws *WebServer) updateScoreboard(w http.ResponseWriter, r *http.Request) {
 	connector.Serv.Restart()
 
 	// Redirect back to admin
-	http.Redirect(w, r, "admin", http.StatusSeeOther)
-}
-
-func (ws *WebServer) debugSerial(w http.ResponseWriter, r *http.Request) {
-	input, ok := r.URL.Query()["debug"]
-	if !ok || len(input[0]) < 1 {
-		log.Println("No debug string provided, use debug='command'")
-		return
-	}
-
-	if input[0] == "read" {
-		output := connector.Serv.Read()
-		log.Printf("output in debug function: %+v", output)
-	} else {
-		connector.Serv.Write(input[0])
-	}
+	http.Redirect(w, r, "/", http.StatusSeeOther)
 }

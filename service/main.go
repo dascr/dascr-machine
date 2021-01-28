@@ -56,7 +56,7 @@ func main() {
 	go func() {
 		err := connector.Serv.Start()
 		if err != nil {
-			log.Panicf("ERROR: Error starting the connector service: %+v", err)
+			log.Printf("ERROR: Error starting the connector service: %+v", err)
 		}
 	}()
 

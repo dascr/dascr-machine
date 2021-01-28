@@ -1,5 +1,7 @@
 package connector
 
+// This just holds the mapping of string received by serial connection
+// and what string has to be sent to the scoreboard
 var (
 	matrixMap map[string]string = map[string]string{
 		"120": "20/1",

@@ -18,6 +18,8 @@ var (
 			Host:  "127.0.0.1",
 			Port:  "8000",
 			Game:  "dascr",
+			User:  "",
+			Pass:  "",
 		},
 	}
 	// Read config file
@@ -37,6 +39,7 @@ type Settings struct {
 type MachineConfig struct {
 	WaitingTime int    `json:"wait"`
 	Serial      string `json:"serial"`
+	Error       string `json:"-"`
 }
 
 // ScoreboardConfig will hold the config of the scoreboard
@@ -46,6 +49,9 @@ type ScoreboardConfig struct {
 	Host  string `json:"host"`
 	Port  string `json:"port"`
 	Game  string `json:"game"`
+	User  string `json:"user"`
+	Pass  string `json:"pass"`
+	Error string `json:"-"`
 }
 
 // Init will read config from file or create default config

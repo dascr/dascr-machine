@@ -19,6 +19,11 @@
 
             <button type="submit">Save</button>
         </form>
+        <div id="machine-error">
+            {{if (ne .Machine.Error "") }}
+            <p>Error: {{.Machine.Error}}</p>
+            {{ end }}
+        </div>
     </div>
     <div id="scoreboard">
         <h4>Scoreboard config</h4>
@@ -39,8 +44,19 @@
             <label for="sbgame">Scoreboard Game ID</label>
             <input id="sbgame" name="sbgame" type="text" value="{{.Scoreboard.Game}}" />
 
+            <label for="sbuser">Scoreboard Basic Auth User</label>
+            <input id="sbuser" name="sbuser" type="text" value="{{.Scoreboard.User}}" />
+
+            <label for="sbpass">Scoreboard Basic Auth Password</label>
+            <input id="sbpass" name="sbpass" type="password" value="" />
+
             <button type="submit">Save</button>
         </form>
+        <div id="machine-error">
+            {{if (ne .Scoreboard.Error "") }}
+            <p>Error: {{.Scoreboard.Error}}</p>
+            {{ end }}
+        </div>
     </div>
     <div id="log">
         <h4>Live log</h4>

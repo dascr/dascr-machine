@@ -2,9 +2,15 @@ package connector
 
 import (
 	"log"
-	"time"
 )
 
+// startWebsocket is a wrapper to start the websocket client as go routine
+func (c *Service) startWebsocket() {
+	c.listenToWebsocket()
+}
+
+// listentoWebsocket will listen for updates
+// and then update the status
 func (c *Service) listenToWebsocket() {
 	log.Println("Started Websocket listener routine")
 	for {
@@ -18,11 +24,9 @@ func (c *Service) listenToWebsocket() {
 			log.Println("read:", err)
 			return
 		}
-		log.Printf("Got websocket message: %+v", string(message))
-		if string(message) == "update" {
-			time.Sleep(time.Second * 1)
+
+		if string(message) == "update" || string(message) == "redirect" {
 			c.updateStatus()
-			log.Println("Status updated")
 		}
 	}
 }

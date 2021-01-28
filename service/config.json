@@ -1,12 +1,14 @@
 {
     "machine": {
-        "wait": 6,
+        "wait": 5,
         "serial": "/dev/ttyACM0"
     },
     "scoreboard": {
-        "https": false,
-        "host": "127.0.0.1",
-        "port": "8000",
-        "game": "dascr"
+        "https": true,
+        "host": "demo.dascr.org",
+        "port": "443",
+        "game": "dascr",
+        "user": "dsf",
+        "pass": ""
     }
 }
