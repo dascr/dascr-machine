@@ -1,0 +1,24 @@
+body {
+  display: flex;
+  min-height: 100vh;
+  flex-direction: column;
+}
+
+main {
+  flex: 1 0 auto;
+}
+
+.nav-wrapper,
+.page-footer,
+.btn {
+  background-color: #3c5b6c;
+}
+
+.btn:hover {
+  background-color: #1d3c4c;
+}
+
+a {
+  text-decoration: none;
+  color: #3c5b6c;
+}

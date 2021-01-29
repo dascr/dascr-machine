@@ -54,6 +54,8 @@ func (c *Service) Start() error {
 		c.Host = config.Config.Scoreboard.Host
 		c.Port = config.Config.Scoreboard.Port
 		c.Game = config.Config.Scoreboard.Game
+		c.User = config.Config.Scoreboard.User
+		c.Pass = config.Config.Scoreboard.Pass
 
 		c.CookieJar = &cookiejar.Jar{}
 
@@ -79,7 +81,6 @@ func (c *Service) Start() error {
 		path := fmt.Sprintf("/ws/%+v", c.Game)
 
 		u := &url.URL{Scheme: scheme, Host: host, Path: path}
-		log.Printf("DEBUG: ws url is: %+v", u.String())
 
 		// create channels
 		c.Quit = make(chan int)

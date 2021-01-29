@@ -2,19 +2,24 @@ package ui
 
 import (
 	"context"
+	"embed"
 	"fmt"
 	"html/template"
+	"io/fs"
 	"log"
 	"net/http"
 	"strconv"
 
 	"github.com/dascr/dascr-machine/service/config"
 	"github.com/dascr/dascr-machine/service/connector"
-	"github.com/gorilla/mux"
 )
 
 // Webs is the global webserver
 var Webs WebServer
+
+// Static will provide the embedded files as http.FS
+//go:embed static
+var webui embed.FS
 
 // WebServer will hold the information to run the UIs webserver
 type WebServer struct {
@@ -25,17 +30,20 @@ type WebServer struct {
 
 // Start will start the ui webserver
 func (ws *WebServer) Start() error {
+	staticdir, err := fs.Sub(webui, "static")
+	if err != nil {
+		return err
+	}
 	// Setup routing
-	mux := mux.NewRouter()
-	mux.HandleFunc("/", ws.admin)
-	mux.HandleFunc("/updateMachine", ws.updateMachine)
-	mux.HandleFunc("/updateScoreboard", ws.updateScoreboard)
+	http.Handle("/", http.FileServer(http.FS(staticdir)))
+	http.HandleFunc("/admin", ws.admin)
+	http.HandleFunc("/updateMachine", ws.updateMachine)
+	http.HandleFunc("/updateScoreboard", ws.updateScoreboard)
 	add := fmt.Sprintf("%+v:%+v", ws.IP, ws.Port)
 	ws.HTTPServer = &http.Server{
-		Addr:    add,
-		Handler: mux,
+		Addr: add,
 	}
-	log.Printf("Navigate to http://%+v:%+v/ to configure your darts machine", ws.IP, ws.Port)
+	log.Printf("Navigate to http://%+v:%+v to configure your darts machine", ws.IP, ws.Port)
 
 	if err := ws.HTTPServer.ListenAndServe(); err != nil {
 		return err
@@ -52,7 +60,15 @@ func (ws *WebServer) Stop(ctx context.Context) {
 
 // Admin route
 func (ws *WebServer) admin(w http.ResponseWriter, r *http.Request) {
-	t, err := template.ParseFiles("static/admin.html")
+	file, err := webui.ReadFile("static/admin.html")
+	if err != nil {
+		log.Printf("Error when reading template admin.html %+v", err)
+		http.Error(w, "Error when reading template admin.html", http.StatusBadRequest)
+		return
+	}
+
+	t := template.New("adminPage")
+	_, err = t.Parse(string(file))
 	if err != nil {
 		log.Printf("Error when reading template admin.html %+v", err)
 		http.Error(w, "Error when reading template admin.html", http.StatusBadRequest)
@@ -100,7 +116,7 @@ func (ws *WebServer) updateMachine(w http.ResponseWriter, r *http.Request) {
 	connector.Serv.Restart()
 
 	// Redirect back to admin
-	http.Redirect(w, r, "/", http.StatusSeeOther)
+	http.Redirect(w, r, "/admin", http.StatusSeeOther)
 }
 
 func (ws *WebServer) updateScoreboard(w http.ResponseWriter, r *http.Request) {
@@ -147,5 +163,5 @@ func (ws *WebServer) updateScoreboard(w http.ResponseWriter, r *http.Request) {
 	connector.Serv.Restart()
 
 	// Redirect back to admin
-	http.Redirect(w, r, "/", http.StatusSeeOther)
+	http.Redirect(w, r, "/admin", http.StatusSeeOther)
 }

@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>DaSCR-Machine Admin</title>
+
+    <link rel="stylesheet" href="materialize.min.css" media="screen,projection" />
+    <link rel="stylesheet" href="main.css" />
+    <script src="materialize.min.js"></script>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons" />
+</head>
+
+<body>
+    <nav>
+        <div class="nav-wrapper">
+            <a href="/" class="brand-logo">DaSCR-Machine</a>
+            <ul id="nav-mobile" class="right hide-on-small-and-down">
+                <li><a href="admin">Admin</a></li>
+            </ul>
+        </div>
+        </div>
+    </nav>
+    <main class="container">
+        <h1>Setup the DaSCR-Machine</h1>
+        <div id="machine">
+            <h4>Machine Config</h4>
+            <div class="row">
+                <form class="col s12" action="updateMachine" method="POST">
+                    <div class="input field col s6">
+                        <label for="delay">Delay after triggering ultrasonic sensor</label>
+                        <input id="delay" name="delay" type="number" min="3" max="10" value="{{.Machine.WaitingTime}}"
+                            class="validate" />
+                    </div>
+
+                    <div class="input field col s6">
+                        <label for="serial">Serial port of arduino hardware</label>
+                        <input id="serial" name="serial" type="text" value="{{.Machine.Serial}}" class="validate" />
+                    </div>
+
+                    <div class="input field col s12">
+                        <button class="btn waves-effect waves-light" type="submit">
+                            <i class="material-icons left">save</i>
+                            Save
+                        </button>
+                    </div>
+                </form>
+            </div>
+            {{if (ne .Machine.Error "") }}
+            <div id="machine-error" class="card-panel red darken-4 z-depth-2">
+                <p class="white-text">ERROR: {{.Machine.Error}}</p>
+            </div>
+            {{ end }}
+        </div>
+        <div id="scoreboard">
+            <h4>Scoreboard Config</h4>
+            <div class="row">
+                <form class="col s12" action="updateScoreboard" method="POST">
+                    <div class="input field col s4">
+                        <label for="sbhost">Scoreboard host ip</label>
+                        <input id="sbhost" name="sbhost" type="text" value="{{.Scoreboard.Host}}" class="validate" />
+                    </div>
+
+                    <div class="input field col s4">
+                        <label for="sbport">Scoreboard port</label>
+                        <input id="sbport" name="sbport" type="number" value="{{.Scoreboard.Port}}" class="validate" />
+                    </div>
+
+                    <div class="input field col s4">
+                        <label for="sbgame">Scoreboard Game ID</label>
+                        <input id="sbgame" name="sbgame" type="text" value="{{.Scoreboard.Game}}" class="validate" />
+                    </div>
+
+                    <div class="input field col s4">
+                        <label for="sbuser">Scoreboard Basic Auth User</label>
+                        <input id="sbuser" name="sbuser" type="text" value="{{.Scoreboard.User}}" />
+                    </div>
+
+                    <div class="input field col s4">
+                        <label for="sbpass">Scoreboard Basic Auth Password</label>
+                        <input id="sbpass" name="sbpass" type="password" value="{{.Scoreboard.Pass}}" />
+                    </div>
+
+                    <div class="input field col s4">
+                        <p>
+                            <label>
+                                {{ if .Scoreboard.HTTPS }}
+                                <input id="sbprot" name="sbprot" type="checkbox" value="https" checked />
+                                {{ else }}
+                                <input id="sbprot" name="sbprot" type="checkbox" value="https" />
+                                {{ end }}
+                                <span>HTTPS</span>
+                            </label>
+                        </p>
+                    </div>
+
+                    <div class="input field col s12">
+                        <button class="btn waves-effect waves-light" type="submit">
+                            <i class="material-icons left">save</i>
+                            Save
+                        </button>
+                    </div>
+                </form>
+            </div>
+            {{if (ne .Scoreboard.Error "") }}
+            <div id="machine-error" class="card-panel red darken-4 z-depth-2">
+                <p class="white-text">Error: {{.Scoreboard.Error}}</p>
+            </div>
+            {{ end }}
+        </div>
+        <!--
+        <div id="log">
+            <div class="row">
+                <h4>Live log</h4>
+                <div class="input-field col s12">
+                    <textarea id="log" cols="120" rows="40" class="materialize-textarea" readonly>
+                        Lorem Ipsum ...
+                    </textarea>
+                </div>
+            </div>
+        </div>
+-->
+        <div id="help">
+            <div class="row">
+                <h4>How to find information</h4>
+                <div class="col s6">
+                    <p><b>Delay time</b> will be the time the machine will wait to switch to the next player after
+                        registering movement with the ultrasonic sensor.</p>
+                </div>
+                <div class="col s6">
+                    <p><b>Serial port</b> of your Arduino needs to be the full path to the serial port. You can find it
+                        in your linux console using this command:</p>
+                    <code>ls -la /dev/tty*</code>
+                    <p>Most of the time it is something like <i>/dev/ttyA**</i></p>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col s4">
+                    <p><b>Scoreboard ip</b> needs to be the ip address to the system where <a
+                            href="https://github.com/dascr/dascr-board">DaSCR-Board</a> is running.</p>
+                </div>
+
+                <div class="col s4">
+                    <p><b>Scoreboard port</b> needs to be the port of the running <a
+                            href="https://github.com/dascr/dascr-board">DaSCR-Board</a> api backend.</p>
+                </div>
+
+                <div class="col s4">
+                    <p><b>Scoreboard Game ID</b> needs to be the Game ID you want the machine to send to.</p>
+                </div>
+
+                <div class="col s6">
+                    <p><b>Basic Auth</b> username and password will be needed if your machine hosting the DaSCR-Board is
+                        protected with a password</p>
+                </div>
+
+                <div class="col s6"><b>HTTPS</b> can be checked if you machine hosting the DaSCR-Board is protected with
+                    TLS.</div>
+            </div>
+        </div>
+    </main>
+
+    <!-- <script>
+        document.getElementById('log').scrollTop = document.getElementById(
+            'log'
+        ).scrollHeight;
+    </script> -->
+
+    <script type="text/javascript" src="materialize.min.js"></script>
+</body>
+
+<footer class="page-footer">
+        <div class="container">
+            <div class="row">
+                <div class="col s4">
+                    <span class="grey-text text-lighten-4"><i class="material-icons left">copyright</i> 2021 Patrick Hener</span>
+                </div>
+                <div class="col s4">
+                    <a class="grey-text text-lighten-4" href="https://github.com/dascr"><i
+                            class="material-icons left">sd_card</i>Github</a>
+                </div>
+                <div class="col s4">
+                    <a class="grey-text text-lighten-4" href="https://dascr.org"><i
+                            class="material-icons left">public</i>dascr.org</a>
+                </div>
+            </div>
+        </div>
+</footer>
+
+</html>

@@ -87,6 +87,7 @@ func (c *Service) nextPlayer() {
 
 	// Write 4 to serial to set bUltrasonicThresholdMeasured false
 	c.Write("4")
+	c.State.Blink = false
 }
 
 // rematch will send rematch using sendToScoreboard
