@@ -120,8 +120,9 @@ func (c *Service) Start() error {
 		log.Println("Serial connection initiated")
 		config.Config.Machine.Error = ""
 
-		// Write 7 to blink 7 times to serial
-		c.Conn.Write([]byte("7\n"))
+		// Write 9 to arduino indicating we are connected
+		// Button should blink 7 times
+		c.Write("9")
 		c.Running = true
 
 		log.Println("Connector service started")

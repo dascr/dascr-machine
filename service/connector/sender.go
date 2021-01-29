@@ -41,13 +41,11 @@ func (c *Service) sendToScoreboard(url, method string) error {
 	case "get":
 		req, err = http.NewRequest("GET", target, nil)
 		if err != nil {
-			c.buttonBlink()
 			return err
 		}
 	case "post":
 		req, err = http.NewRequest("POST", target, nil)
 		if err != nil {
-			c.buttonBlink()
 			return err
 		}
 	default:
@@ -60,11 +58,33 @@ func (c *Service) sendToScoreboard(url, method string) error {
 
 	resp, err = c.HTTPClient.Do(req)
 	if err != nil {
-		c.buttonBlink()
 		return err
 	}
 
 	json.NewDecoder(resp.Body).Decode(&c.State)
+
+	// Write state to Arduino
+	switch c.State.State {
+	case "THROW":
+		log.Println("In sendScoreboard writing 1")
+		c.Write("1")
+	case "NEXTPLAYER":
+		log.Println("In sendScoreboard writing 2")
+		c.Write("2")
+	case "BUST":
+		log.Println("In sendScoreboard writing 2")
+		c.Write("2")
+	case "BUSTCONDITION":
+		log.Println("In sendScoreboard writing 2")
+		c.Write("2")
+	case "BUSTNOCHECKOUT":
+		log.Println("In sendScoreboard writing 2")
+		c.Write("2")
+	case "WON":
+		log.Println("In sendScoreboard writing 1")
+		c.Write("5")
+	}
+
 	return nil
 }
 
@@ -79,15 +99,16 @@ func (c *Service) throw(matrix string) {
 
 // nextPlayer will send nextPlayer using sendToScoreboard
 func (c *Service) nextPlayer() {
+	log.Println("Writing 4")
+	// Write 4 to serial to reset ultrasonic loop at Arduino
+	c.Write("4")
+
 	url := ("nextPlayer")
 	err := c.sendToScoreboard(url, "post")
 	if err != nil {
 		log.Printf("Error when sending nextPlayer: %+v", err)
 	}
 
-	// Write 4 to serial to set bUltrasonicThresholdMeasured false
-	c.Write("4")
-	c.State.Blink = false
 }
 
 // rematch will send rematch using sendToScoreboard
@@ -110,15 +131,10 @@ func (c *Service) updateStatus() {
 
 // buttonOn will write 1 to serial and thus switch the button on
 func (c *Service) buttonOn() {
-	c.Write("1")
+	c.Write("6")
 }
 
 // buttonOff will write 2 to serial and thus switch the button off
 func (c *Service) buttonOff() {
-	c.Write("2")
-}
-
-// buttonBlink will write 7 to serial and thus let the button blink 7 times
-func (c *Service) buttonBlink() {
 	c.Write("7")
 }

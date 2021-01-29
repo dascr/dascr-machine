@@ -7,8 +7,8 @@ import (
 
 // Game will hold minimal state to control machine outputs
 type Game struct {
-	State string `json:"GameState"`
-	Blink bool
+	State           string `json:"GameState"`
+	RetrievingDarts bool
 }
 
 // startGame will be the wrapper to start the main loop as go routine
@@ -22,11 +22,6 @@ func (c *Service) mainLoop() {
 	// Fetch initial state from backend
 	c.updateStatus()
 
-	// Initial button set
-	if c.State.State != "THROW" {
-		c.buttonOn()
-	}
-
 	// Loop with select case
 	for {
 		select {
@@ -38,35 +33,32 @@ func (c *Service) mainLoop() {
 		default:
 		}
 
-		// Default is to udate button state
-		c.stateMachine()
+		// Default is to update button state
+		// c.stateMachine()
 	}
 }
 
+/*
 // stateMachine will handle LED of button
 func (c *Service) stateMachine() {
-	// Block state machine so arduino
-	// can let the button blink on certain condition
-	if !c.State.Blink {
-		switch c.State.State {
-		case "WON":
-			c.buttonOn()
-		case "NEXTPLAYER":
-			c.buttonOn()
-		case "THROW":
-			c.buttonOff()
-		case "BUST":
-			c.buttonOn()
-		case "BUSTCONDITION":
-			c.buttonOn()
-		case "BUSTNOCHECKOUT":
-			c.buttonOn()
-		default:
-			break
-		}
-
+	switch c.State.State {
+	case "WON":
+		c.buttonBlink1()
+	case "NEXTPLAYER":
+		c.buttonOn()
+	case "THROW":
+		c.buttonOff()
+	case "BUST":
+		c.buttonOn()
+	case "BUSTCONDITION":
+		c.buttonOn()
+	case "BUSTNOCHECKOUT":
+		c.buttonOn()
+	default:
+		break
 	}
 }
+*/
 
 // processCommand will act on the serial command
 // and send to scoreboard depending on command
@@ -99,11 +91,13 @@ func (c *Service) processCommand(cmd string) {
 		case "u":
 			// ultrasonic movement
 			if c.State.State != "THROW" {
+				log.Println("Hitting and sending 3")
 				// Write movement to serial and apply wait delay
 				c.Write("3")
-				c.State.Blink = true
+				log.Println("Now waiting")
 				// Sleep the Waiting Time from config
 				time.Sleep(time.Second * time.Duration(c.WaitingTime))
+				log.Println("Sending next player")
 				// Then send next player
 				c.nextPlayer()
 			}

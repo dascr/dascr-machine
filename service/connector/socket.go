@@ -27,6 +27,9 @@ func (c *Service) listenToWebsocket() {
 
 		if string(message) == "update" || string(message) == "redirect" {
 			c.updateStatus()
+			if c.State.State == "" {
+				c.buttonOn()
+			}
 		}
 	}
 }
