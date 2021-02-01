@@ -13,7 +13,7 @@ func (c *Service) startSerial() {
 
 // Write will write to the serial connection
 func (c *Service) Write(input string) {
-	b := []byte(input + "\n")
+	b := []byte("<" + input + ">")
 
 	_, err := c.Conn.Write(b)
 	if err != nil {

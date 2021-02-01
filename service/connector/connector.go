@@ -124,10 +124,10 @@ func (c *Service) Start() error {
 
 		// Write 9 to arduino indicating we are connected
 		// Button should blink 7 times
-		c.Write("9")
+		c.Write("s,9")
 		c.Running = true
 		// Write the Piezo Threshold time to set it at Arduino side
-		threshold := fmt.Sprintf("P%+v\n", c.Piezo)
+		threshold := fmt.Sprintf("p,%+v", c.Piezo)
 		c.Write(threshold)
 
 		log.Println("Connector service started")

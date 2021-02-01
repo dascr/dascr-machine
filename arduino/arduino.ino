@@ -41,11 +41,17 @@ int iButtonState = 0;
 long lDuration;
 int iDistance;
 int iUltrasonicThreshold = 0;
-bool bMotionDetected = false;
-bool bUltrasonicThresholdMeasured = false;
+int iMotionDetected = 0;
+int iUltrasonicThresholdMeasured = 0;
 // Input String from Raspberry Pi to Arduino
-String sInputString = "";
-boolean bStringComplete = false;
+const byte numChars = 32;
+char cInputChars[numChars];
+char cTempChars[numChars];
+char cCommand[numChars] = {0};
+int iParam = 0;
+bool bNewData = false;
+// String sInputString = "";
+// boolean bStringComplete = false;
 
 // State
 // 0: INIT
@@ -70,7 +76,6 @@ int ReadUltrasonicDistance()
   lDuration = pulseIn(echoPin, HIGH);
   iDistance = lDuration * 0.034 / 2;
 
-  delay(100);
   return iDistance;
 }
 
@@ -81,7 +86,6 @@ void CheckButton()
   if (iButtonState == LOW)
   {
     Serial.println("b");
-    ButtonOff();
     delay(500);
   }
 }
@@ -195,7 +199,7 @@ void SetUltrasonicThreshold()
 {
   int iTempDistance = ReadUltrasonicDistance();
   iUltrasonicThreshold = iTempDistance + 3;
-  bUltrasonicThresholdMeasured = true;
+  iUltrasonicThresholdMeasured = 1;
 }
 
 void ProcessUltrasonic()
@@ -207,66 +211,169 @@ void ProcessUltrasonic()
   }
 }
 
+void RecvWithStartEndMarkers()
+{
+  // Define things
+  static bool bRecvInProgress = false;
+  static byte ndx = 0;
+  char cStartMarker = '<';
+  char cEndMarker = '>';
+  char cRC;
+
+  while (Serial.available() > 0 && bNewData == false)
+  {
+    // Read char
+    cRC = Serial.read();
+
+    if (bRecvInProgress == true)
+    {
+      if (cRC != cEndMarker)
+      {
+        // Append char to char array
+        cInputChars[ndx] = cRC;
+        ndx++;
+        // Reduce char to prevent from buffer overflow
+        if (ndx >= numChars)
+        {
+          ndx = numChars - 1;
+        }
+      }
+      else
+      {
+        // Terminate char array
+        cInputChars[ndx] = '\0';
+        // Set things
+        bRecvInProgress = false;
+        ndx = 0;
+        bNewData = true;
+      }
+    }
+    else if (cRC == cStartMarker)
+    {
+      // Start reading
+      bRecvInProgress = true;
+    }
+  }
+}
+
+void ParseData()
+{
+  // Copy to cCommand terminating at ","
+  char *strtokIndx;
+  strtokIndx = strtok(cTempChars, ",");
+  strcpy(cCommand, strtokIndx);
+
+  // Read rest beginning from ","
+  strtokIndx = strtok(NULL, ",");
+  iParam = atoi(strtokIndx);
+}
+
 void ProcessSerial()
 {
-  // Write different states with 0-5
-  if (sInputString.indexOf("0") != -1)
+  // Only process if new data
+  if (bNewData == true)
   {
-    // 0: INIT
-    iState = 0;
-  }
-  if (sInputString.indexOf("1") != -1)
-  {
-    // 1: THROW
-    iState = 1;
-    ButtonOff();
-  }
-  if (sInputString.indexOf("2") != -1)
-  {
-    // 2: NEXTPLAYER
-    iState = 2;
-    ButtonOn();
-  }
-  if (sInputString.indexOf("3") != -1)
-  {
-    // 3: MOTION DETECTED
-    bMotionDetected = true;
-    ButtonOff();
-  }
-  if (sInputString.indexOf("4") != -1)
-  {
-    // 4: RESET ULTRASONIC
-    bUltrasonicThresholdMeasured = false;
-    bMotionDetected = false;
-    ButtonOff();
-  }
-  if (sInputString.indexOf("5") != -1)
-  {
-    // 5: WON
-    iState = 5;
-  }
-  // 6 - Button on
-  if (sInputString.indexOf("6") != -1)
-  {
-    ButtonOn();
-  }
-  // 7 - Button off
-  else if (sInputString.indexOf("7") != -1)
-  {
-    ButtonOff();
-  }
-  else if (sInputString.indexOf("9") != -1)
-  {
-    Blink(7);
-    iState = 1;
-  } else if (sInputString.startsWith("P"))
-  {
-    String value = sInputString.substring(1);
-    iPiezoThreshold = value.toInt();
-  }
+    // Copy to temp chars as strtok would write to original char array
+    strcpy(cTempChars, cInputChars);
+    // Parse data and split into command and param
+    ParseData();
 
-  sInputString = "";
-  bStringComplete = false;
+    // If, else if around cCommand
+    if (strcmp(cCommand, "p") == 0)
+    {
+      // if p set new piezo threshold
+      iPiezoThreshold = iParam;
+    }
+    else if (strcmp(cCommand, "s") == 0)
+    {
+      // if s set new game state and switch over it to control app flow
+      iState = iParam;
+      switch (iState)
+      {
+      case 1:
+        // THROW
+        ButtonOff();
+        break;
+      case 2:
+        // NEXTPLAYER
+        ButtonOn();
+        break;
+      case 3:
+        // MOTION DETECTED
+        SetMotion();
+        break;
+      case 4:
+        // RESET ULTRASONIC
+        ResetMotion();
+        break;
+      case 9:
+        // SERVICE CONNECTED
+        Blink(7);
+        iState = 1;
+        break;
+      default:
+        break;
+      }
+    }
+    else if (strcmp(cCommand, "b") == 0)
+    {
+      // Turn button off or on from remote
+      switch (iParam)
+      {
+      case 0:
+        ButtonOff();
+      case 1:
+        ButtonOn();
+      default:
+        break;
+      }
+    }
+
+    // Reset bNewData state
+    bNewData = false;
+  }
+}
+
+void SetMotion()
+{
+  iMotionDetected = 1;
+}
+
+void ResetMotion()
+{
+  iUltrasonicThresholdMeasured = 0;
+  iMotionDetected = 0;
+}
+
+void DetectMotion()
+{
+  // Button Overwrites Motion detection
+  CheckButton();
+  // If there is no motion process ultrasonic
+  switch (iMotionDetected)
+  {
+  case 0:
+    ProcessUltrasonic();
+    break;
+  default:
+    break;
+  }
+}
+
+void EvalNextPlayer()
+{
+  switch (iUltrasonicThresholdMeasured)
+  {
+  case 0:
+    ButtonOn();
+    SetUltrasonicThreshold();
+    break;
+  case 1:
+    DetectMotion();
+    break;
+  default:
+    break;
+  }
 }
 
 /* Setup loop */
@@ -300,71 +407,33 @@ void setup()
 /* Main loop */
 void loop()
 {
-  // First read serial
-  if (bStringComplete)
-  {
-    ProcessSerial();
-  }
 
-  if (iState == 0)
+  // Read serial and process it
+  RecvWithStartEndMarkers();
+  ProcessSerial();
+
+  // Switch over state loop
+  switch (iState)
   {
+  case 0:
     BlinkSlow(1);
-  }
-  else if (iState == 1)
-  {
+    break;
+  case 1:
     EvalThrow();
     CheckMissed();
     CheckButton();
-  }
-  else if (iState == 2)
-  {
-    if (bUltrasonicThresholdMeasured)
-    {
-      CheckButton();
-      // If there is no motion process ultrasonic
-      if (!bMotionDetected)
-      {
-        ProcessUltrasonic();
-      }
-      // else blink to indicate dart retrieval
-      else
-      {
-        Blink(1);
-      }
-    }
-    else
-    {
-      ButtonOn();
-      SetUltrasonicThreshold();
-    }
-  }
-  else if (iState == 5)
-  {
+    break;
+  case 2:
+    EvalNextPlayer();
+    break;
+  case 3:
+    Blink(1);
+    break;
+  case 5:
     CheckButton();
     BlinkExtraSlow(1);
-  }
-
-  // Last read serial
-  if (bStringComplete)
-  {
-    ProcessSerial();
-  }
-
-  String debug = "00DEBUG: iState is: " + iState;
-  Serial.println(debug);
-
-}
-
-/* Serial Events */
-void serialEvent()
-{
-  while (Serial.available())
-  {
-    char inChar = (char)Serial.read();
-    sInputString += inChar;
-    if (inChar == '\n')
-    {
-      bStringComplete = true;
-    }
+    break;
+  default:
+    break;
   }
 }

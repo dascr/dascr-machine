@@ -66,17 +66,17 @@ func (c *Service) sendToScoreboard(url, method string) error {
 	// Write state to Arduino
 	switch c.State.State {
 	case "THROW":
-		c.Write("1")
+		c.Write("s,1")
 	case "NEXTPLAYER":
-		c.Write("2")
+		c.Write("s,2")
 	case "BUST":
-		c.Write("2")
+		c.Write("s,2")
 	case "BUSTCONDITION":
-		c.Write("2")
+		c.Write("s,2")
 	case "BUSTNOCHECKOUT":
-		c.Write("2")
+		c.Write("s,2")
 	case "WON":
-		c.Write("5")
+		c.Write("s,5")
 	}
 
 	return nil
@@ -94,7 +94,7 @@ func (c *Service) throw(matrix string) {
 // nextPlayer will send nextPlayer using sendToScoreboard
 func (c *Service) nextPlayer() {
 	// Write 4 to serial to reset ultrasonic loop at Arduino
-	c.Write("4")
+	c.Write("s,4")
 
 	url := ("nextPlayer")
 	err := c.sendToScoreboard(url, "post")
@@ -124,10 +124,10 @@ func (c *Service) updateStatus() {
 
 // buttonOn will write 1 to serial and thus switch the button on
 func (c *Service) buttonOn() {
-	c.Write("6")
+	c.Write("b,1")
 }
 
 // buttonOff will write 2 to serial and thus switch the button off
 func (c *Service) buttonOff() {
-	c.Write("7")
+	c.Write("b,0")
 }
