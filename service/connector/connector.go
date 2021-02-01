@@ -22,6 +22,7 @@ var Serv Service
 // and sending to the scoreboard
 type Service struct {
 	WaitingTime     int
+	Piezo           int
 	HTTPS           bool
 	Host            string
 	Port            string
@@ -48,6 +49,7 @@ func (c *Service) Start() error {
 		var resp *http.Response
 		// Read config
 		c.WaitingTime = config.Config.Machine.WaitingTime
+		c.Piezo = config.Config.Machine.Piezo
 		c.Config.Name = config.Config.Machine.Serial
 
 		c.HTTPS = config.Config.Scoreboard.HTTPS
@@ -124,6 +126,9 @@ func (c *Service) Start() error {
 		// Button should blink 7 times
 		c.Write("9")
 		c.Running = true
+		// Write the Piezo Threshold time to set it at Arduino side
+		threshold := fmt.Sprintf("P%+v\n", c.Piezo)
+		c.Write(threshold)
 
 		log.Println("Connector service started")
 

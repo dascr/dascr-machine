@@ -98,8 +98,19 @@ func (ws *WebServer) updateMachine(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Error when updating machine settings", http.StatusBadRequest)
 		return
 	}
+
+	usThreshold, err := strconv.Atoi(r.FormValue(("thresh")))
+	if err != nil {
+		log.Printf("Invalid form input: %+v", err)
+		http.Error(w, "Error when updating machine settings", http.StatusBadRequest)
+		return
+	}
+
 	if config.Config.Machine.WaitingTime != delayTime {
 		config.Config.Machine.WaitingTime = delayTime
+	}
+	if config.Config.Machine.Piezo != usThreshold {
+		config.Config.Machine.Piezo = usThreshold
 	}
 	if config.Config.Machine.Serial != r.FormValue("serial") {
 		config.Config.Machine.Serial = r.FormValue("serial")

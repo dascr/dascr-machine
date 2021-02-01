@@ -35,11 +35,18 @@
                     </div>
 
                     <div class="input field col s6">
+                        <label for="thres">Piezo Threshold</label>
+                        <input id="thresh" name="thresh" type="number" min="20" value="{{.Machine.Piezo}}"
+                            class="validate" />
+                    </div>
+
+                    <div class="input field col s6">
                         <label for="serial">Serial port of arduino hardware</label>
                         <input id="serial" name="serial" type="text" value="{{.Machine.Serial}}" class="validate" />
                     </div>
 
-                    <div class="input field col s12">
+
+                    <div class="input field col s6">
                         <button class="btn waves-effect waves-light" type="submit">
                             <i class="material-icons left">save</i>
                             Save
@@ -129,6 +136,10 @@
                         registering movement with the ultrasonic sensor.</p>
                 </div>
                 <div class="col s6">
+                    <p><b>Piezo Threshold</b> will control the sensitivity of the piezo sensors triggering missed darts.
+                        The less the number the more sensitive is the missed dart detection.</p>
+                </div>
+                <div class="col s12">
                     <p><b>Serial port</b> of your Arduino needs to be the full path to the serial port. You can find it
                         in your linux console using this command:</p>
                     <code>ls -la /dev/tty*</code>
@@ -171,21 +182,22 @@
 </body>
 
 <footer class="page-footer">
-        <div class="container">
-            <div class="row">
-                <div class="col s4">
-                    <span class="grey-text text-lighten-4"><i class="material-icons left">copyright</i> 2021 Patrick Hener</span>
-                </div>
-                <div class="col s4">
-                    <a class="grey-text text-lighten-4" href="https://github.com/dascr"><i
-                            class="material-icons left">sd_card</i>Github</a>
-                </div>
-                <div class="col s4">
-                    <a class="grey-text text-lighten-4" href="https://dascr.org"><i
-                            class="material-icons left">public</i>dascr.org</a>
-                </div>
+    <div class="container">
+        <div class="row">
+            <div class="col s4">
+                <span class="grey-text text-lighten-4"><i class="material-icons left">copyright</i> 2021 Patrick
+                    Hener</span>
+            </div>
+            <div class="col s4">
+                <a class="grey-text text-lighten-4" href="https://github.com/dascr"><i
+                        class="material-icons left">sd_card</i>Github</a>
+            </div>
+            <div class="col s4">
+                <a class="grey-text text-lighten-4" href="https://dascr.org"><i
+                        class="material-icons left">public</i>dascr.org</a>
             </div>
         </div>
+    </div>
 </footer>
 
 </html>

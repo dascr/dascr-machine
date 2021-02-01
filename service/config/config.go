@@ -11,6 +11,7 @@ var (
 	def = Settings{
 		Machine: MachineConfig{
 			WaitingTime: 5,
+			Piezo:       20,
 			Serial:      "/dev/ttyACM0",
 		},
 		Scoreboard: ScoreboardConfig{
@@ -38,6 +39,7 @@ type Settings struct {
 // MachineConfig will hold the config for machine parameters
 type MachineConfig struct {
 	WaitingTime int    `json:"wait"`
+	Piezo       int    `json:"piezo"`
 	Serial      string `json:"serial"`
 	Error       string `json:"-"`
 }

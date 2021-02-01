@@ -213,26 +213,26 @@ void ProcessSerial()
   {
     // 0: INIT
     iState = 0;
-    Serial.println("DEBUG from ARD state set to 0");
+    // Serial.println("DEBUG from ARD state set to 0");
   }
   if (sInputString.indexOf("1") != -1)
   {
     // 1: THROW
     iState = 1;
     ButtonOff();
-    Serial.println("DEBUG from ARD state set to 1");
+    // Serial.println("DEBUG from ARD state set to 1");
   }
   if (sInputString.indexOf("2") != -1)
   {
     // 2: NEXTPLAYER
     iState = 2;
-    Serial.println("DEBUG from ARD state set to 2");
+    // Serial.println("DEBUG from ARD state set to 2");
   }
   if (sInputString.indexOf("3") != -1)
   {
     // 3: MOTION DETECTED
     bMotionDetected = true;
-    Serial.println("DEBUG from ARD motion detected true");
+    // Serial.println("DEBUG from ARD motion detected true");
   }
   if (sInputString.indexOf("4") != -1)
   {
@@ -240,13 +240,13 @@ void ProcessSerial()
     bUltrasonicThresholdMeasured = false;
     bMotionDetected = false;
     ButtonOff();
-    Serial.println("DEBUG from ARD reset us");
+    // Serial.println("DEBUG from ARD reset us");
   }
   if (sInputString.indexOf("5") != -1)
   {
     // 5: WON
     iState = 5;
-    Serial.println("DEBUG from ARD state set to 5");
+    // Serial.println("DEBUG from ARD state set to 5");
   }
   // 6 - Button on
   if (sInputString.indexOf("6") != -1)
@@ -262,6 +262,11 @@ void ProcessSerial()
   {
     Blink(7);
     iState = 1;
+  } else if (sInputString.startsWith("P"))
+  {
+    String value = sInputString.substring(1);
+    iPiezoThreshold = value.toInt();
+    // Serial.println("P: " + iPiezoThreshold);
   }
 
   sInputString = "";
