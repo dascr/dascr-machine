@@ -91,13 +91,10 @@ func (c *Service) processCommand(cmd string) {
 		case "u":
 			// ultrasonic movement
 			if c.State.State != "THROW" {
-				log.Println("Hitting and sending 3")
 				// Write movement to serial and apply wait delay
 				c.Write("3")
-				log.Println("Now waiting")
 				// Sleep the Waiting Time from config
 				time.Sleep(time.Second * time.Duration(c.WaitingTime))
-				log.Println("Sending next player")
 				// Then send next player
 				c.nextPlayer()
 			}
