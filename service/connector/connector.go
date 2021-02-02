@@ -1,16 +1,14 @@
 package connector
 
 import (
-	"bufio"
-	"context"
 	"fmt"
-	"log"
 	"net/http"
 	"net/http/cookiejar"
 	"net/url"
 	"time"
 
 	"github.com/dascr/dascr-machine/service/config"
+	"github.com/dascr/dascr-machine/service/logger"
 	"github.com/gorilla/websocket"
 	"github.com/tarm/serial"
 )
@@ -21,7 +19,9 @@ var Serv Service
 // Service will handle the communication with the arduino
 // and sending to the scoreboard
 type Service struct {
-	WaitingTime     int
+	WaitingTime     time.Duration
+	DebounceTime    time.Duration
+	NextPlayerTime  time.Time
 	Piezo           int
 	HTTPS           bool
 	Host            string
@@ -36,7 +36,6 @@ type Service struct {
 	Quit            chan int
 	Command         chan string
 	State           Game
-	Scanner         *bufio.Scanner
 	HTTPClient      *http.Client
 	CookieJar       *cookiejar.Jar
 	WebsocketClient *websocket.Dialer
@@ -44,11 +43,15 @@ type Service struct {
 
 // Start will start the connector service
 func (c *Service) Start() error {
+	// Debug log the config
+	logger.Debugf("Config is: %#v", config.Config)
 	if !c.Running {
 		var err error
 		var resp *http.Response
 		// Read config
-		c.WaitingTime = config.Config.Machine.WaitingTime
+		c.WaitingTime = time.Duration(config.Config.Machine.WaitingTime * int(time.Second))
+		c.DebounceTime = time.Duration(c.WaitingTime + 2*time.Second)
+		c.NextPlayerTime = time.Now()
 		c.Piezo = config.Config.Machine.Piezo
 		c.Config.Name = config.Config.Machine.Serial
 
@@ -100,26 +103,24 @@ func (c *Service) Start() error {
 		c.WebsocketConn, resp, err = c.WebsocketClient.Dial(u.String(), *wsHeaders)
 		if err != nil {
 			if err == websocket.ErrBadHandshake {
-				log.Printf("handshake failed with status %d", resp.StatusCode)
+				logger.Errorf("handshake failed with status %d", resp.StatusCode)
 			}
-			log.Printf("cannot connect to websocket: %+v", err)
+			logger.Errorf("cannot connect to websocket: %+v", err)
 			config.Config.Scoreboard.Error = err.Error()
 			return err
 		}
-		log.Printf("Connected to websocket @ %+v", u.String())
+		logger.Infof("Connected to websocket @ %+v", u.String())
 		config.Config.Scoreboard.Error = ""
 
 		// Connect via serial
 		c.Conn, err = serial.OpenPort(c.Config)
 		if err != nil {
-			log.Printf("cannot connect to serial: %+v", err)
+			logger.Errorf("cannot connect to serial: %+v", err)
 			config.Config.Machine.Error = err.Error()
 			return err
 		}
-		// Assign scanner
-		c.Scanner = bufio.NewScanner(c.Conn)
 
-		log.Println("Serial connection initiated")
+		logger.Info("Serial connection initiated")
 		config.Config.Machine.Error = ""
 
 		// Write 9 to arduino indicating we are connected
@@ -130,7 +131,7 @@ func (c *Service) Start() error {
 		threshold := fmt.Sprintf("p,%+v", c.Piezo)
 		c.Write(threshold)
 
-		log.Println("Connector service started")
+		logger.Info("Connector service started")
 
 		// Start websocket
 		go c.startWebsocket()
@@ -146,7 +147,8 @@ func (c *Service) Start() error {
 }
 
 // Stop will stop the connector service
-func (c *Service) Stop(ctx context.Context) {
+// func (c *Service) Stop(ctx context.Context) {
+func (c *Service) Stop() {
 	// Only stop if running
 	if c.Running {
 		// Terminate go routines
@@ -155,7 +157,7 @@ func (c *Service) Stop(ctx context.Context) {
 		c.Conn.Close()
 
 		c.Running = false
-		log.Println("Connector service stopped")
+		logger.Info("Connector service stopped")
 	}
 }
 
@@ -163,11 +165,12 @@ func (c *Service) Stop(ctx context.Context) {
 func (c *Service) Restart() error {
 	// Only stop if running
 	if c.Running {
-		log.Println("Restarting connector service")
-		ctx, cancle := context.WithTimeout(context.Background(), 15)
-		defer cancle()
-		c.Stop(ctx)
-		time.Sleep(time.Second * 2)
+		logger.Info("Restarting connector service")
+		// ctx, cancle := context.WithTimeout(context.Background(), 15)
+		// defer cancle()
+		// c.Stop(ctx)
+		c.Stop()
+		time.Sleep(time.Second * 3)
 	}
 
 	err := c.Start()

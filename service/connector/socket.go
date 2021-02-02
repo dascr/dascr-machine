@@ -1,8 +1,6 @@
 package connector
 
-import (
-	"log"
-)
+import "github.com/dascr/dascr-machine/service/logger"
 
 // startWebsocket is a wrapper to start the websocket client as go routine
 func (c *Service) startWebsocket() {
@@ -12,7 +10,7 @@ func (c *Service) startWebsocket() {
 // listentoWebsocket will listen for updates
 // and then update the status
 func (c *Service) listenToWebsocket() {
-	log.Println("Started Websocket listener routine")
+	logger.Info("Started Websocket listener routine")
 	for {
 		select {
 		case <-c.Quit:
@@ -21,7 +19,7 @@ func (c *Service) listenToWebsocket() {
 		}
 		_, message, err := c.WebsocketConn.ReadMessage()
 		if err != nil {
-			log.Println("read:", err)
+			logger.Errorf("read:", err)
 			return
 		}
 

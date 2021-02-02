@@ -2,13 +2,13 @@ package main
 
 import (
 	"context"
-	"log"
 	"net/http"
 	"os"
 	"os/signal"
 
 	"github.com/dascr/dascr-machine/service/config"
 	"github.com/dascr/dascr-machine/service/connector"
+	"github.com/dascr/dascr-machine/service/logger"
 	"github.com/dascr/dascr-machine/service/ui"
 
 	"github.com/tarm/serial"
@@ -22,7 +22,7 @@ func main() {
 	if netInt != "any" {
 		ip, err = config.ReadSystemIP(netInt)
 		if err != nil {
-			log.Panic(err)
+			logger.Panic(err)
 		}
 	} else {
 		ip = "0.0.0.0"
@@ -31,7 +31,7 @@ func main() {
 	// Init config
 	err = config.Init()
 	if err != nil {
-		panic(err)
+		logger.Panic(err)
 	}
 
 	// Setup WebServer for UI
@@ -49,14 +49,14 @@ func main() {
 	go func() {
 		err := ui.Webs.Start()
 		if err != http.ErrServerClosed {
-			log.Panicf("ERROR: Error starting web server: %+v", err)
+			logger.Warnf("Error starting web server: %+v", err)
 		}
 	}()
 
 	go func() {
 		err := connector.Serv.Start()
 		if err != nil {
-			log.Printf("ERROR: Error starting the connector service: %+v", err)
+			logger.Warnf("Error starting the connector service: %+v", err)
 		}
 	}()
 
@@ -71,11 +71,12 @@ func main() {
 	defer cancel()
 
 	// Output
-	log.Println("Got ctrl+c, shutting down ...")
+	logger.Info("Got ctrl+c, shutting down ...")
 
 	// Stop service
 	ui.Webs.Stop(ctx)
-	connector.Serv.Stop(ctx)
+	// connector.Serv.Stop(ctx)
+	connector.Serv.Stop()
 
 	// Exit
 	os.Exit(0)

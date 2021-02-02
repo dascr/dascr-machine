@@ -6,12 +6,12 @@ import (
 	"fmt"
 	"html/template"
 	"io/fs"
-	"log"
 	"net/http"
 	"strconv"
 
 	"github.com/dascr/dascr-machine/service/config"
 	"github.com/dascr/dascr-machine/service/connector"
+	"github.com/dascr/dascr-machine/service/logger"
 )
 
 // Webs is the global webserver
@@ -43,7 +43,7 @@ func (ws *WebServer) Start() error {
 	ws.HTTPServer = &http.Server{
 		Addr: add,
 	}
-	log.Printf("Navigate to http://%+v:%+v to configure your darts machine", ws.IP, ws.Port)
+	logger.Infof("Navigate to http://%+v:%+v to configure your darts machine", ws.IP, ws.Port)
 
 	if err := ws.HTTPServer.ListenAndServe(); err != nil {
 		return err
@@ -55,14 +55,14 @@ func (ws *WebServer) Start() error {
 // Stop will stop the ui webserver
 func (ws *WebServer) Stop(ctx context.Context) {
 	ws.HTTPServer.Shutdown(ctx)
-	log.Println("Webserver stopped")
+	logger.Info("Webserver stopped")
 }
 
 // Admin route
 func (ws *WebServer) admin(w http.ResponseWriter, r *http.Request) {
 	file, err := webui.ReadFile("static/admin.html")
 	if err != nil {
-		log.Printf("Error when reading template admin.html %+v", err)
+		logger.Errorf("Error when reading template admin.html %+v", err)
 		http.Error(w, "Error when reading template admin.html", http.StatusBadRequest)
 		return
 	}
@@ -70,14 +70,14 @@ func (ws *WebServer) admin(w http.ResponseWriter, r *http.Request) {
 	t := template.New("adminPage")
 	_, err = t.Parse(string(file))
 	if err != nil {
-		log.Printf("Error when reading template admin.html %+v", err)
+		logger.Errorf("Error when reading template admin.html %+v", err)
 		http.Error(w, "Error when reading template admin.html", http.StatusBadRequest)
 		return
 	}
 
 	err = t.Execute(w, &config.Config)
 	if err != nil {
-		log.Printf("Cannot execute template admin.html: %+v", err)
+		logger.Errorf("Cannot execute template admin.html: %+v", err)
 		http.Error(w, "Error when executing template admin.html", http.StatusBadRequest)
 		return
 	}
@@ -87,21 +87,21 @@ func (ws *WebServer) admin(w http.ResponseWriter, r *http.Request) {
 func (ws *WebServer) updateMachine(w http.ResponseWriter, r *http.Request) {
 	err := r.ParseForm()
 	if err != nil {
-		log.Println(err)
+		logger.Error(err)
 		http.Error(w, "Error when updating machine settings", http.StatusBadRequest)
 		return
 	}
 
 	delayTime, err := strconv.Atoi(r.FormValue("delay"))
 	if err != nil {
-		log.Printf("Invalid form input: %+v", err)
+		logger.Errorf("Invalid form input: %+v", err)
 		http.Error(w, "Error when updating machine settings", http.StatusBadRequest)
 		return
 	}
 
 	usThreshold, err := strconv.Atoi(r.FormValue(("thresh")))
 	if err != nil {
-		log.Printf("Invalid form input: %+v", err)
+		logger.Errorf("Invalid form input: %+v", err)
 		http.Error(w, "Error when updating machine settings", http.StatusBadRequest)
 		return
 	}
@@ -118,7 +118,7 @@ func (ws *WebServer) updateMachine(w http.ResponseWriter, r *http.Request) {
 
 	err = config.SaveConfig()
 	if err != nil {
-		log.Printf("Error writing config file after update: %+v", err)
+		logger.Errorf("Error writing config file after update: %+v", err)
 		http.Error(w, "Error when updating machine settings", http.StatusBadRequest)
 		return
 	}
@@ -133,7 +133,7 @@ func (ws *WebServer) updateMachine(w http.ResponseWriter, r *http.Request) {
 func (ws *WebServer) updateScoreboard(w http.ResponseWriter, r *http.Request) {
 	err := r.ParseForm()
 	if err != nil {
-		log.Println(err)
+		logger.Error(err)
 		http.Error(w, "Error when updating scoreborad settings", http.StatusBadRequest)
 		return
 	}
@@ -165,7 +165,7 @@ func (ws *WebServer) updateScoreboard(w http.ResponseWriter, r *http.Request) {
 
 	err = config.SaveConfig()
 	if err != nil {
-		log.Printf("Error writing config file after update: %+v", err)
+		logger.Errorf("Error writing config file after update: %+v", err)
 		http.Error(w, "Error when updating scoreborad settings", http.StatusBadRequest)
 		return
 	}

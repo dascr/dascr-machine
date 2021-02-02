@@ -4,8 +4,10 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"log"
 	"net/http"
+	"time"
+
+	"github.com/dascr/dascr-machine/service/logger"
 )
 
 // basicAuth will add basic auth to connection
@@ -87,7 +89,7 @@ func (c *Service) throw(matrix string) {
 	url := fmt.Sprintf("throw/%+v", matrix)
 	err := c.sendToScoreboard(url, "post")
 	if err != nil {
-		log.Printf("Error when sending nextPlayer: %+v", err)
+		logger.Errorf("Error when sending nextPlayer: %+v", err)
 	}
 }
 
@@ -99,9 +101,11 @@ func (c *Service) nextPlayer() {
 	url := ("nextPlayer")
 	err := c.sendToScoreboard(url, "post")
 	if err != nil {
-		log.Printf("Error when sending nextPlayer: %+v", err)
+		logger.Errorf("Error when sending nextPlayer: %+v", err)
 	}
 
+	// Setting the time after nextPlayer to debounce multiple "u"'s
+	c.NextPlayerTime = time.Now()
 }
 
 // rematch will send rematch using sendToScoreboard
@@ -109,7 +113,7 @@ func (c *Service) rematch() {
 	url := ("rematch")
 	err := c.sendToScoreboard(url, "post")
 	if err != nil {
-		log.Printf("Error when sending nextPlayer: %+v", err)
+		logger.Errorf("Error when sending nextPlayer: %+v", err)
 	}
 }
 
@@ -118,7 +122,7 @@ func (c *Service) updateStatus() {
 	url := "display"
 	err := c.sendToScoreboard(url, "get")
 	if err != nil {
-		log.Println(err)
+		logger.Error(err)
 	}
 }
 

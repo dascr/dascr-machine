@@ -1,5 +1,10 @@
 package connector
 
+import (
+	"bufio"
+	"fmt"
+)
+
 // processSerial will handle the output coming from serial
 func (c *Service) startSerial() {
 	go c.Read()
@@ -23,10 +28,12 @@ func (c *Service) Write(input string) {
 
 // Read will read from the serial connection
 func (c *Service) Read() {
-	for c.Scanner.Scan() {
-		cmd := c.Scanner.Text()
+	s := bufio.NewScanner(c.Conn)
+	for s.Scan() {
+		cmd := s.Text()
 		if cmd != "" {
 			c.Command <- cmd
 		}
 	}
+	c.Command <- fmt.Sprintf("ERROR in serial.Read(): %+v", s.Err().Error())
 }
