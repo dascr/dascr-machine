@@ -75,7 +75,6 @@ func main() {
 
 	// Stop service
 	ui.Webs.Stop(ctx)
-	// connector.Serv.Stop(ctx)
 	connector.Serv.Stop()
 
 	// Exit
