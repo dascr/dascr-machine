@@ -1,10 +1,7 @@
 package main
 
 import (
-	"context"
 	"net/http"
-	"os"
-	"os/signal"
 
 	"github.com/dascr/dascr-machine/service/config"
 	"github.com/dascr/dascr-machine/service/connector"
@@ -46,37 +43,35 @@ func main() {
 		Baud: 9600,
 	}
 
-	go func() {
-		err := ui.Webs.Start()
-		if err != http.ErrServerClosed {
-			logger.Warnf("Error starting web server: %+v", err)
-		}
-	}()
+	err = connector.Serv.Start()
+	if err != nil {
+		logger.Warnf("Error starting the connector service: %+v", err)
+	}
 
-	go func() {
-		err := connector.Serv.Start()
-		if err != nil {
-			logger.Warnf("Error starting the connector service: %+v", err)
-		}
-	}()
+	err = ui.Webs.Start()
+	if err != http.ErrServerClosed {
+		logger.Panicf("Error starting web server: %+v", err)
+	}
 
-	c := make(chan os.Signal, 1)
-	signal.Notify(c, os.Interrupt)
+	/*
+		c := make(chan os.Signal, 1)
+		signal.Notify(c, os.Interrupt)
 
-	// Block until we receive our signal.
-	<-c
+		// Block until we receive our signal.
+		<-c
 
-	// Create a deadline to wait for.
-	ctx, cancel := context.WithTimeout(context.Background(), 15)
-	defer cancel()
+		// Create a deadline to wait for.
+		ctx, cancel := context.WithTimeout(context.Background(), 15)
+		defer cancel()
 
-	// Output
-	logger.Info("Got ctrl+c, shutting down ...")
+		// Output
+		logger.Info("Got ctrl+c, shutting down ...")
 
-	// Stop service
-	ui.Webs.Stop(ctx)
-	connector.Serv.Stop()
+		// Stop service
+		ui.Webs.Stop(ctx)
+		connector.Serv.Stop()
 
-	// Exit
-	os.Exit(0)
+		// Exit
+		os.Exit(0)
+	*/
 }
