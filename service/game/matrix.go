@@ -1,4 +1,4 @@
-package connector
+package game
 
 // This just holds the mapping of string received by serial connection
 // and what string has to be sent to the scoreboard

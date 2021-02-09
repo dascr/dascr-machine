@@ -7,23 +7,10 @@ import (
 	"github.com/dascr/dascr-machine/service/connector"
 	"github.com/dascr/dascr-machine/service/logger"
 	"github.com/dascr/dascr-machine/service/ui"
-
-	"github.com/tarm/serial"
 )
 
 func main() {
-	var ip string
 	var err error
-	// Read eth name from ENV
-	netInt := config.MustGet("INT")
-	if netInt != "any" {
-		ip, err = config.ReadSystemIP(netInt)
-		if err != nil {
-			logger.Panic(err)
-		}
-	} else {
-		ip = "0.0.0.0"
-	}
 
 	// Init config
 	err = config.Init()
@@ -32,23 +19,16 @@ func main() {
 	}
 
 	// Setup WebServer for UI
-	ui.Webs = ui.WebServer{
-		IP:   ip,
-		Port: 3000,
-	}
+	web := ui.New()
 
-	// Setup Connector service
-	connector.Serv.Config = &serial.Config{
-		Name: config.Config.Machine.Serial,
-		Baud: 9600,
-	}
+	connector.MachineConnector = connector.New()
 
-	err = connector.Serv.Start()
+	err = connector.MachineConnector.Start()
 	if err != nil {
 		logger.Warnf("Error starting the connector service: %+v", err)
 	}
 
-	err = ui.Webs.Start()
+	err = web.Start()
 	if err != http.ErrServerClosed {
 		logger.Panicf("Error starting web server: %+v", err)
 	}

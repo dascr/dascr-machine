@@ -8,14 +8,12 @@ import (
 	"io/fs"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/dascr/dascr-machine/service/config"
 	"github.com/dascr/dascr-machine/service/connector"
 	"github.com/dascr/dascr-machine/service/logger"
 )
-
-// Webs is the global webserver
-var Webs WebServer
 
 // Static will provide the embedded files as http.FS
 //go:embed static
@@ -26,6 +24,27 @@ type WebServer struct {
 	IP         string
 	Port       int
 	HTTPServer *http.Server
+}
+
+// New will return an instantiated WebServer
+func New() *WebServer {
+	var ip string
+	var err error
+	// Read eth name from ENV
+	netInt := config.MustGet("INT")
+	if netInt != "any" {
+		ip, err = config.ReadSystemIP(netInt)
+		if err != nil {
+			logger.Panic(err)
+		}
+	} else {
+		ip = "0.0.0.0"
+	}
+
+	return &WebServer{
+		IP:   ip,
+		Port: 3000,
+	}
 }
 
 // Start will start the ui webserver
@@ -107,13 +126,28 @@ func (ws *WebServer) updateMachine(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if config.Config.Machine.WaitingTime != delayTime {
+		// set it in config
 		config.Config.Machine.WaitingTime = delayTime
+		// Set it for the game object too
+		connector.MachineConnector.Game.WaitingTime = time.Duration(config.Config.Machine.WaitingTime * int(time.Second))
+		connector.MachineConnector.Game.DebounceTime = time.Duration(config.Config.Machine.WaitingTime*int(time.Second) + 2*int(time.Second))
+		logger.Debugf("Changed Waiting time and Debounce time of Connector to: %+v and %+v", connector.MachineConnector.Game.WaitingTime, connector.MachineConnector.Game.DebounceTime)
 	}
 	if config.Config.Machine.Piezo != usThreshold {
+		// set it in config
 		config.Config.Machine.Piezo = usThreshold
+		// Write the Piezo Threshold time to set it at Arduino side
+		threshold := fmt.Sprintf("p,%+v", usThreshold)
+		connector.MachineConnector.Serial.Write(threshold)
+		logger.Debugf("Changed Piezo Threshold to: %+v and wrote it to serial port", config.Config.Machine.Piezo)
 	}
 	if config.Config.Machine.Serial != r.FormValue("serial") {
+		// set it in config
 		config.Config.Machine.Serial = r.FormValue("serial")
+		// stop serial connection and start it again after sleeping 1 second
+		connector.MachineConnector.Serial.Stop()
+		time.Sleep(1 * time.Second)
+		connector.MachineConnector.Serial.Start()
 	}
 
 	err = config.SaveConfig()
@@ -122,9 +156,6 @@ func (ws *WebServer) updateMachine(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Error when updating machine settings", http.StatusBadRequest)
 		return
 	}
-
-	// restart connector service
-	connector.Serv.Restart()
 
 	// Redirect back to admin
 	http.Redirect(w, r, "/admin", http.StatusSeeOther)
@@ -138,29 +169,41 @@ func (ws *WebServer) updateScoreboard(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Change config for persistance and MachineConnector.Sender config for live update
 	https := r.FormValue("sbprot") != ""
 	if config.Config.Scoreboard.HTTPS != https {
 		config.Config.Scoreboard.HTTPS = https
+		connector.MachineConnector.Sender.HTTPS = https
 	}
 
 	if config.Config.Scoreboard.Host != r.FormValue("sbhost") {
-		config.Config.Scoreboard.Host = r.FormValue("sbhost")
+		val := r.FormValue("sbhost")
+		config.Config.Scoreboard.Host = val
+		connector.MachineConnector.Sender.IP = val
 	}
 
 	if config.Config.Scoreboard.Port != r.FormValue("sbport") {
-		config.Config.Scoreboard.Port = r.FormValue("sbport")
+		val := r.FormValue("sbport")
+		config.Config.Scoreboard.Port = val
+		connector.MachineConnector.Sender.Port = val
 	}
 
 	if config.Config.Scoreboard.Game != r.FormValue("sbgame") {
-		config.Config.Scoreboard.Game = r.FormValue("sbgame")
+		val := r.FormValue("sbgame")
+		config.Config.Scoreboard.Game = val
+		connector.MachineConnector.Sender.GameID = val
 	}
 
 	if config.Config.Scoreboard.User != r.FormValue("sbuser") {
-		config.Config.Scoreboard.User = r.FormValue("sbuser")
+		val := r.FormValue("sbuser")
+		config.Config.Scoreboard.User = val
+		connector.MachineConnector.Sender.User = val
 	}
 
 	if config.Config.Scoreboard.Pass != r.FormValue("sbpass") {
-		config.Config.Scoreboard.Pass = r.FormValue("sbpass")
+		val := r.FormValue("sbpass")
+		config.Config.Scoreboard.Pass = val
+		connector.MachineConnector.Sender.Pass = val
 	}
 
 	err = config.SaveConfig()
@@ -169,9 +212,6 @@ func (ws *WebServer) updateScoreboard(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Error when updating scoreborad settings", http.StatusBadRequest)
 		return
 	}
-
-	// restart connector service
-	connector.Serv.Restart()
 
 	// Redirect back to admin
 	http.Redirect(w, r, "/admin", http.StatusSeeOther)
