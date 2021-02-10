@@ -147,3 +147,37 @@ func (s *Sender) UpdateStatus() {
 		logger.Error(err)
 	}
 }
+
+// CheckConnection will check if the scoreboard is reachable and return an error if not
+// It is used by the ui to check after updating the Scoreboard config
+func (s *Sender) CheckConnection() error {
+	protocol := "http"
+	if s.HTTPS {
+		protocol = "https"
+	}
+
+	target := fmt.Sprintf("%+v://%+v/api", protocol, s.IP)
+	if s.Port != "80" && s.Port != "443" {
+		target = fmt.Sprintf("%+v://%+v:%+v/api", protocol, s.IP, s.Port)
+	}
+
+	req, err := http.NewRequest("GET", target, nil)
+	if err != nil {
+		return err
+	}
+
+	if s.User != "" {
+		req.Header.Add("Authorization", "Basic "+common.BasicAuth(s.User, s.Pass))
+	}
+
+	resp, err := s.HTTPClient.Do(req)
+	if err != nil {
+		return err
+	}
+
+	if resp.StatusCode != 200 {
+		err := fmt.Errorf("Status is %+v, Connection not established", resp.StatusCode)
+		return err
+	}
+	return nil
+}

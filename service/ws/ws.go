@@ -28,7 +28,6 @@ func New(sender *sender.Sender) *WS {
 
 	dialer := &websocket.Dialer{}
 
-	// Other vars
 	scheme := "ws"
 	if scoreboard.HTTPS {
 		scheme = "wss"
@@ -43,7 +42,7 @@ func New(sender *sender.Sender) *WS {
 	u := &url.URL{Scheme: scheme, Host: host, Path: path}
 
 	wsHeaders := http.Header{}
-	// Connect Websocket
+
 	if scoreboard.User != "" {
 		wsHeaders.Add("Authorization", "Basic "+common.BasicAuth(scoreboard.User, scoreboard.Pass))
 	}
@@ -53,7 +52,7 @@ func New(sender *sender.Sender) *WS {
 		Client: dialer,
 		Header: wsHeaders,
 		URL:    u,
-		Quit:   make(chan int),
+		Quit:   make(chan int, 1),
 		Sender: sender,
 	}
 }
@@ -83,6 +82,8 @@ func (w *WS) Start() error {
 	for {
 		select {
 		case <-w.Quit:
+			logger.Info("Stopping websocket connection")
+			w.Conn.Close()
 			return nil
 		default:
 		}
@@ -97,4 +98,9 @@ func (w *WS) Start() error {
 			w.Sender.UpdateStatus()
 		}
 	}
+}
+
+// Reload will reload the websocket connection with new settings
+func (w *WS) Reload() {
+	logger.Error("Still need to implement websocket reload")
 }

@@ -64,9 +64,9 @@ func (s *Serial) Start() error {
 	return nil
 }
 
-// Stop will terminate the serial loop
-func (s *Serial) Stop() {
-	s.Quit <- 1
+// Reload will terminate the serial loop
+func (s *Serial) Reload() {
+	logger.Error("Still need to implement serial reload")
 }
 
 // Write will write to the serial connection

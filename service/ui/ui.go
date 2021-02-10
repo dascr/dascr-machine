@@ -145,9 +145,7 @@ func (ws *WebServer) updateMachine(w http.ResponseWriter, r *http.Request) {
 		// set it in config
 		config.Config.Machine.Serial = r.FormValue("serial")
 		// stop serial connection and start it again after sleeping 1 second
-		connector.MachineConnector.Serial.Stop()
-		time.Sleep(1 * time.Second)
-		connector.MachineConnector.Serial.Start()
+		connector.MachineConnector.Serial.Reload()
 	}
 
 	err = config.SaveConfig()
@@ -205,6 +203,18 @@ func (ws *WebServer) updateScoreboard(w http.ResponseWriter, r *http.Request) {
 		config.Config.Scoreboard.Pass = val
 		connector.MachineConnector.Sender.Pass = val
 	}
+
+	logger.Debug("Scoreboard configuration changed, checking connection...")
+	/* Check connection via heartbeat */
+	if err := connector.MachineConnector.Sender.CheckConnection(); err != nil {
+		config.Config.Scoreboard.Error = err.Error()
+	} else {
+		config.Config.Scoreboard.Error = ""
+	}
+
+	logger.Debug("Reloading websocket")
+	/* Reconnect websocket */
+	connector.MachineConnector.Websocket.Reload()
 
 	err = config.SaveConfig()
 	if err != nil {
