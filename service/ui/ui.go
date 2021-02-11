@@ -6,8 +6,10 @@ import (
 	"fmt"
 	"html/template"
 	"io/fs"
+	"io/ioutil"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/dascr/dascr-machine/service/config"
@@ -24,6 +26,12 @@ type WebServer struct {
 	IP         string
 	Port       int
 	HTTPServer *http.Server
+}
+
+// templateOptions will hold information to render the page
+type templateOptions struct {
+	Config     *config.Settings
+	SerialList []string
 }
 
 // New will return an instantiated WebServer
@@ -94,7 +102,12 @@ func (ws *WebServer) admin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = t.Execute(w, &config.Config)
+	tinfo := &templateOptions{
+		Config:     &config.Config,
+		SerialList: findArduino(),
+	}
+
+	err = t.Execute(w, tinfo)
 	if err != nil {
 		logger.Errorf("Cannot execute template admin.html: %+v", err)
 		http.Error(w, "Error when executing template admin.html", http.StatusBadRequest)
@@ -144,8 +157,10 @@ func (ws *WebServer) updateMachine(w http.ResponseWriter, r *http.Request) {
 	if config.Config.Machine.Serial != r.FormValue("serial") {
 		// set it in config
 		config.Config.Machine.Serial = r.FormValue("serial")
+		logger.Debug("Serial port changed, reloading serial connection")
 		// stop serial connection and start it again after sleeping 1 second
 		connector.MachineConnector.Serial.Reload()
+		logger.Debug("Finished reloading serial connection")
 	}
 
 	err = config.SaveConfig()
@@ -156,6 +171,7 @@ func (ws *WebServer) updateMachine(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Redirect back to admin
+	time.Sleep(time.Second / 5)
 	http.Redirect(w, r, "/admin", http.StatusSeeOther)
 }
 
@@ -215,6 +231,7 @@ func (ws *WebServer) updateScoreboard(w http.ResponseWriter, r *http.Request) {
 	logger.Debug("Reloading websocket")
 	/* Reconnect websocket */
 	connector.MachineConnector.Websocket.Reload()
+	logger.Debug("Finished reloading websocket config")
 
 	err = config.SaveConfig()
 	if err != nil {
@@ -224,5 +241,32 @@ func (ws *WebServer) updateScoreboard(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Redirect back to admin
+	time.Sleep(time.Second / 5)
 	http.Redirect(w, r, "/admin", http.StatusSeeOther)
+}
+
+// findArduino looks for the file that represents the Arduino
+// serial connection. Returns the fully qualified path to the
+// ui template if we are able to find a likely candidate for an
+// Arduino, otherwise an error string if unable to find
+// something that 'looks' like an Arduino device.
+func findArduino() []string {
+	var list []string
+	contents, _ := ioutil.ReadDir("/dev")
+
+	// Look for what is mostly likely the Arduino device
+	for _, f := range contents {
+		if strings.Contains(f.Name(), "tty.usbserial") ||
+			strings.Contains(f.Name(), "ttyUSB") || strings.Contains(f.Name(), "ttyACM") {
+			list = append(list, "/dev/"+f.Name())
+		}
+	}
+
+	// If the list has content return the list
+	// Otherwise return one single entry
+	if len(list) != 0 {
+		return list
+	}
+	list = append(list, "Arduino not found")
+	return list
 }

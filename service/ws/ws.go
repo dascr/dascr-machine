@@ -1,6 +1,7 @@
 package ws
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -14,12 +15,13 @@ import (
 
 // WS will hold the websocket information
 type WS struct {
-	Conn   *websocket.Conn
-	Client *websocket.Dialer
-	Header http.Header
-	URL    *url.URL
-	Quit   chan int
-	Sender *sender.Sender
+	Conn    *websocket.Conn
+	Client  *websocket.Dialer
+	Header  http.Header
+	URL     *url.URL
+	Quit    chan int
+	Message chan string
+	Sender  *sender.Sender
 }
 
 // New will return an instantiated websocket connection
@@ -48,20 +50,41 @@ func New(sender *sender.Sender) *WS {
 	}
 
 	return &WS{
-		Conn:   nil,
-		Client: dialer,
-		Header: wsHeaders,
-		URL:    u,
-		Quit:   make(chan int, 1),
-		Sender: sender,
+		Conn:    nil,
+		Client:  dialer,
+		Header:  wsHeaders,
+		URL:     u,
+		Quit:    make(chan int, 1),
+		Message: make(chan string),
+		Sender:  sender,
 	}
 }
 
 // Start will start the websocket connection
 func (w *WS) Start() error {
+	ctx, cancel := context.WithCancel(context.Background())
+
+	go w.read(ctx)
+
+	// Infinite read until chan Quit
+	for {
+		select {
+		case m := <-w.Message:
+			// Handle message
+			if m == "update" || m == "redirect" {
+				w.Sender.UpdateStatus()
+			}
+		case <-w.Quit:
+			cancel()
+			return nil
+		}
+	}
+}
+
+// read will infinitly send messages from ws to channel Message
+func (w *WS) read(ctx context.Context) {
 	var resp *http.Response
 	var err error
-
 	// Connect
 	w.Conn, resp, err = w.Client.Dial(w.URL.String(), w.Header)
 	if err != nil {
@@ -70,7 +93,7 @@ func (w *WS) Start() error {
 		}
 		logger.Errorf("cannot connect to websocket: %+v", err)
 		config.Config.Scoreboard.Error = err.Error()
-		return err
+		return
 	}
 
 	logger.Infof("Connected to websocket @ %+v", w.URL.String())
@@ -78,29 +101,58 @@ func (w *WS) Start() error {
 
 	logger.Info("Started Websocket listener routine")
 
-	// Infinite read until chan Quit
 	for {
 		select {
-		case <-w.Quit:
-			logger.Info("Stopping websocket connection")
+		case <-ctx.Done():
+			close(w.Message)
+			close(w.Quit)
 			w.Conn.Close()
-			return nil
+			return
 		default:
-		}
-		_, message, err := w.Conn.ReadMessage()
-		if err != nil {
-			logger.Errorf("read:", err)
-			return err
-		}
+			_, message, err := w.Conn.ReadMessage()
+			if err != nil {
+				logger.Errorf("read:", err)
+			}
 
-		// Handle message
-		if string(message) == "update" || string(message) == "redirect" {
-			w.Sender.UpdateStatus()
+			w.Message <- string(message)
 		}
 	}
 }
 
 // Reload will reload the websocket connection with new settings
 func (w *WS) Reload() {
-	logger.Error("Still need to implement websocket reload")
+	logger.Info("Stopping the websocket connection")
+	w.Quit <- 1
+
+	scoreboard := config.Config.Scoreboard
+
+	dialer := &websocket.Dialer{}
+
+	scheme := "ws"
+	if scoreboard.HTTPS {
+		scheme = "wss"
+	}
+
+	host := fmt.Sprintf("%+v", scoreboard.Host)
+	if scoreboard.Port != "80" && scoreboard.Port != "443" {
+		host = fmt.Sprintf("%+v:%+v", scoreboard.Host, scoreboard.Port)
+	}
+	path := fmt.Sprintf("/ws/%+v", scoreboard.Game)
+
+	u := &url.URL{Scheme: scheme, Host: host, Path: path}
+
+	wsHeaders := http.Header{}
+
+	if scoreboard.User != "" {
+		wsHeaders.Add("Authorization", "Basic "+common.BasicAuth(scoreboard.User, scoreboard.Pass))
+	}
+
+	w.Conn = nil
+	w.Client = dialer
+	w.Header = wsHeaders
+	w.URL = u
+	w.Quit = make(chan int, 1)
+	w.Message = make(chan string)
+
+	go w.Start()
 }

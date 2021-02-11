@@ -2,6 +2,7 @@ package serial
 
 import (
 	"bufio"
+	"context"
 	"fmt"
 
 	"github.com/dascr/dascr-machine/service/config"
@@ -15,6 +16,7 @@ type Serial struct {
 	Connection   *serial.Port
 	Quit         chan int
 	Command      chan string
+	Message      chan string
 }
 
 // New will return an instantiated Serial object
@@ -25,20 +27,40 @@ func New(cmd chan string) *Serial {
 			Name: machine.Serial,
 			Baud: 9600,
 		},
-		Quit:    make(chan int),
+		Quit:    make(chan int, 1),
+		Message: make(chan string),
 		Command: cmd,
 	}
 }
 
 // Start will start the serial loop
 func (s *Serial) Start() error {
+	ctx, cancel := context.WithCancel(context.Background())
+
+	go s.read(ctx)
+
+	// Infinite read until chan Quit
+	for {
+		select {
+		case c := <-s.Message:
+			s.Command <- c
+		case <-s.Quit:
+			cancel()
+			return nil
+		}
+	}
+
+}
+
+// read will infinitly read on the serial interface
+func (s *Serial) read(ctx context.Context) {
 	var err error
 	// Connect via serial
 	s.Connection, err = serial.OpenPort(s.SerialConfig)
 	if err != nil {
 		logger.Errorf("cannot connect to serial: %+v", err)
 		config.Config.Machine.Error = err.Error()
-		return err
+		return
 	}
 
 	s.Write("s,9")
@@ -48,25 +70,36 @@ func (s *Serial) Start() error {
 
 	scanner := bufio.NewScanner(s.Connection)
 
-	for scanner.Scan() {
+	for {
 		select {
-		case <-s.Quit:
+		case <-ctx.Done():
+			close(s.Message)
+			close(s.Quit)
 			s.Connection.Close()
-			return nil
+			return
 		default:
-		}
+			scanner.Scan()
 
-		cmd := scanner.Text()
-		if cmd != "" {
-			s.Command <- cmd
+			cmd := scanner.Text()
+			if cmd != "" {
+				s.Message <- cmd
+			}
 		}
 	}
-	return nil
 }
 
 // Reload will terminate the serial loop
 func (s *Serial) Reload() {
-	logger.Error("Still need to implement serial reload")
+	logger.Info("Stopping serial loop")
+	s.Quit <- 1
+
+	machine := config.Config.Machine
+
+	s.SerialConfig.Name = machine.Serial
+	s.Quit = make(chan int, 1)
+	s.Message = make(chan string)
+
+	go s.Start()
 }
 
 // Write will write to the serial connection

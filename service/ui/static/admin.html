@@ -28,25 +28,28 @@
             <h4>Machine Config</h4>
             <div class="row">
                 <form class="col s12" action="updateMachine" method="POST">
-                    <div class="input field col s6">
-                        <label for="delay">Delay after triggering ultrasonic sensor</label>
-                        <input id="delay" name="delay" type="number" min="3" max="10" value="{{.Machine.WaitingTime}}"
-                            class="validate" />
+                    <div class="input-field col s6">
+                        <input id="delay" name="delay" type="number" min="3" max="10" value="{{.Config.Machine.WaitingTime}}"
+                        class="validate" />
+                        <label>Delay after triggering ultrasonic sensor</label>
                     </div>
 
-                    <div class="input field col s6">
-                        <label for="thresh">Piezo Threshold</label>
-                        <input id="thresh" name="thresh" type="number" min="20" value="{{.Machine.Piezo}}"
-                            class="validate" />
+                    <div class="input-field col s6">
+                        <input id="thresh" name="thresh" type="number" min="20" value="{{.Config.Machine.Piezo}}"
+                        class="validate" />
+                        <label>Piezo Threshold</label>
                     </div>
 
-                    <div class="input field col s6">
-                        <label for="serial">Serial port of arduino hardware</label>
-                        <input id="serial" name="serial" type="text" value="{{.Machine.Serial}}" class="validate" />
+                    <div class="input-field col s6">
+                        <select id="serial" name="serial">
+                            {{ range .SerialList }}
+                            <option value="{{.}}">{{.}}</option>
+                            {{ end }}
+                        </select>
+                        <label>Serial port of arduino hardware</label>
                     </div>
 
-
-                    <div class="input field col s6">
+                    <div class="input-field col s6">
                         <button class="btn waves-effect waves-light" type="submit">
                             <i class="material-icons left">save</i>
                             Save
@@ -54,9 +57,9 @@
                     </div>
                 </form>
             </div>
-            {{if (ne .Machine.Error "") }}
+            {{if (ne .Config.Machine.Error "") }}
             <div id="machine-error" class="card-panel red darken-4 z-depth-2">
-                <p class="white-text">ERROR: {{.Machine.Error}}</p>
+                <p class="white-text">ERROR: {{.Config.Machine.Error}}</p>
             </div>
             {{ end }}
         </div>
@@ -64,35 +67,35 @@
             <h4>Scoreboard Config</h4>
             <div class="row">
                 <form class="col s12" action="updateScoreboard" method="POST">
-                    <div class="input field col s4">
+                    <div class="input-field col s4">
                         <label for="sbhost">Scoreboard host ip</label>
-                        <input id="sbhost" name="sbhost" type="text" value="{{.Scoreboard.Host}}" class="validate" />
+                        <input id="sbhost" name="sbhost" type="text" value="{{.Config.Scoreboard.Host}}" class="validate" />
                     </div>
 
-                    <div class="input field col s4">
+                    <div class="input-field col s4">
                         <label for="sbport">Scoreboard port</label>
-                        <input id="sbport" name="sbport" type="number" value="{{.Scoreboard.Port}}" class="validate" />
+                        <input id="sbport" name="sbport" type="number" value="{{.Config.Scoreboard.Port}}" class="validate" />
                     </div>
 
-                    <div class="input field col s4">
+                    <div class="input-field col s4">
                         <label for="sbgame">Scoreboard Game ID</label>
-                        <input id="sbgame" name="sbgame" type="text" value="{{.Scoreboard.Game}}" class="validate" />
+                        <input id="sbgame" name="sbgame" type="text" value="{{.Config.Scoreboard.Game}}" class="validate" />
                     </div>
 
-                    <div class="input field col s4">
+                    <div class="input-field col s4">
                         <label for="sbuser">Scoreboard Basic Auth User</label>
-                        <input id="sbuser" name="sbuser" type="text" value="{{.Scoreboard.User}}" />
+                        <input id="sbuser" name="sbuser" type="text" value="{{.Config.Scoreboard.User}}" />
                     </div>
 
-                    <div class="input field col s4">
+                    <div class="input-field col s4">
                         <label for="sbpass">Scoreboard Basic Auth Password</label>
-                        <input id="sbpass" name="sbpass" type="password" value="{{.Scoreboard.Pass}}" />
+                        <input id="sbpass" name="sbpass" type="password" value="{{.Config.Scoreboard.Pass}}" />
                     </div>
 
-                    <div class="input field col s4">
+                    <div class="input-field col s4">
                         <p>
                             <label>
-                                {{ if .Scoreboard.HTTPS }}
+                                {{ if .Config.Scoreboard.HTTPS }}
                                 <input id="sbprot" name="sbprot" type="checkbox" value="https" checked />
                                 {{ else }}
                                 <input id="sbprot" name="sbprot" type="checkbox" value="https" />
@@ -102,7 +105,7 @@
                         </p>
                     </div>
 
-                    <div class="input field col s12">
+                    <div class="input-field col s12">
                         <button class="btn waves-effect waves-light" type="submit">
                             <i class="material-icons left">save</i>
                             Save
@@ -110,24 +113,12 @@
                     </div>
                 </form>
             </div>
-            {{if (ne .Scoreboard.Error "") }}
+            {{if (ne .Config.Scoreboard.Error "") }}
             <div id="machine-error" class="card-panel red darken-4 z-depth-2">
-                <p class="white-text">Error: {{.Scoreboard.Error}}</p>
+                <p class="white-text">Error: {{.Config.Scoreboard.Error}}</p>
             </div>
             {{ end }}
         </div>
-        <!--
-        <div id="log">
-            <div class="row">
-                <h4>Live log</h4>
-                <div class="input-field col s12">
-                    <textarea id="log" cols="120" rows="40" class="materialize-textarea" readonly>
-                        Lorem Ipsum ...
-                    </textarea>
-                </div>
-            </div>
-        </div>
--->
         <div id="help">
             <div class="row">
                 <h4>How to find information</h4>
@@ -140,10 +131,9 @@
                         The less the number the more sensitive is the missed dart detection.</p>
                 </div>
                 <div class="col s12">
-                    <p><b>Serial port</b> of your Arduino needs to be the full path to the serial port. You can find it
-                        in your linux console using this command:</p>
+                    <p><b>Serial port</b> of your Arduino needs to be selected from the dropdown menu. If the port is not found please check like so:</p>
                     <code>ls -la /dev/tty*</code>
-                    <p>Most of the time it is something like <i>/dev/ttyA**</i></p>
+                    <p>Most of the time it is something like <i>/dev/ttyA**</i>. If it is not found please check you system.</p>
                 </div>
             </div>
             <div class="row">
@@ -172,11 +162,12 @@
         </div>
     </main>
 
-    <!-- <script>
-        document.getElementById('log').scrollTop = document.getElementById(
-            'log'
-        ).scrollHeight;
-    </script> -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            var elems = document.querySelectorAll('select');
+            var instances = M.FormSelect.init(elems);
+        });
+    </script>
 
     <script type="text/javascript" src="materialize.min.js"></script>
 </body>
