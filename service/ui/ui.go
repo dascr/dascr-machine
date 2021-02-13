@@ -142,8 +142,11 @@ func (ws *WebServer) updateMachine(w http.ResponseWriter, r *http.Request) {
 		// set it in config
 		config.Config.Machine.WaitingTime = delayTime
 		// Set it for the game object too
-		connector.MachineConnector.Game.WaitingTime = time.Duration(config.Config.Machine.WaitingTime * int(time.Second))
-		connector.MachineConnector.Game.DebounceTime = time.Duration(config.Config.Machine.WaitingTime*int(time.Second) + 2*int(time.Second))
+		w := time.Second * time.Duration(delayTime)
+		d := w + 2*time.Second
+
+		connector.MachineConnector.Game.WaitingTime = w
+		connector.MachineConnector.Game.DebounceTime = d
 		logger.Debugf("Changed Waiting time and Debounce time of Connector to: %+v and %+v", connector.MachineConnector.Game.WaitingTime, connector.MachineConnector.Game.DebounceTime)
 	}
 	if config.Config.Machine.Piezo != usThreshold {

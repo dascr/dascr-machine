@@ -24,9 +24,12 @@ type Game struct {
 // New will return an instantiated Game
 func New(cmd chan string, sender *sender.Sender, serial *serial.Serial) *Game {
 	machine := config.Config.Machine
+	w := time.Second * time.Duration(machine.WaitingTime)
+	d := w + 2*time.Second
+
 	game := &Game{
-		WaitingTime:    time.Duration(machine.WaitingTime * int(time.Second)),
-		DebounceTime:   time.Duration(machine.WaitingTime*int(time.Second) + 2*int(time.Second)),
+		WaitingTime:    w,
+		DebounceTime:   d,
 		NextPlayerTime: time.Now(),
 		Quit:           make(chan int),
 		Command:        cmd,
@@ -88,7 +91,7 @@ func (g *Game) processCommand(cmd string) {
 		case "u":
 			// ultrasonic movement
 			// As ultrasonic is sending a few more "u" we need to debounce by checking time duration
-			if state.GameState.GameState != "THROW" && time.Since(g.NextPlayerTime) > g.DebounceTime {
+			if state.GameState.GameState != "THROW" && time.Since(g.NextPlayerTime) > time.Second*9 {
 				// Write movement to serial and apply wait delay
 				g.Serial.Write("s,3")
 				// Sleep the Waiting Time from config
