@@ -29,14 +29,14 @@
             <div class="row">
                 <form class="col s12" action="updateMachine" method="POST">
                     <div class="input-field col s6">
-                        <input id="delay" name="delay" type="number" min="3" max="10" value="{{.Config.Machine.WaitingTime}}"
-                        class="validate" />
+                        <input id="delay" name="delay" type="number" min="3" max="10"
+                            value="{{.Config.Machine.WaitingTime}}" class="validate" />
                         <label>Delay after triggering ultrasonic sensor</label>
                     </div>
 
                     <div class="input-field col s6">
                         <input id="thresh" name="thresh" type="number" min="20" value="{{.Config.Machine.Piezo}}"
-                        class="validate" />
+                            class="validate" />
                         <label>Piezo Threshold</label>
                     </div>
 
@@ -69,17 +69,20 @@
                 <form class="col s12" action="updateScoreboard" method="POST">
                     <div class="input-field col s4">
                         <label for="sbhost">Scoreboard host ip</label>
-                        <input id="sbhost" name="sbhost" type="text" value="{{.Config.Scoreboard.Host}}" class="validate" />
+                        <input id="sbhost" name="sbhost" type="text" value="{{.Config.Scoreboard.Host}}"
+                            class="validate" />
                     </div>
 
                     <div class="input-field col s4">
                         <label for="sbport">Scoreboard port</label>
-                        <input id="sbport" name="sbport" type="number" value="{{.Config.Scoreboard.Port}}" class="validate" />
+                        <input id="sbport" name="sbport" type="number" value="{{.Config.Scoreboard.Port}}"
+                            class="validate" />
                     </div>
 
                     <div class="input-field col s4">
                         <label for="sbgame">Scoreboard Game ID</label>
-                        <input id="sbgame" name="sbgame" type="text" value="{{.Config.Scoreboard.Game}}" class="validate" />
+                        <input id="sbgame" name="sbgame" type="text" value="{{.Config.Scoreboard.Game}}"
+                            class="validate" />
                     </div>
 
                     <div class="input-field col s4">
@@ -119,6 +122,20 @@
             </div>
             {{ end }}
         </div>
+        <div id="control">
+            <div class="row">
+                <h4>Control System</h4>
+                    <div class="col s6">
+                        <button class="btn waves-effect waves-light" onclick="shutdown()">
+                            <i class="material-icons left">power_settings_new</i>
+                            Shutdown System
+                        </button>
+                    </div>
+                    <div class="col s6 hide" id="shutdown-notice">
+                        <p class="red-text"><b>System is shutting down</b></p>
+                    </div>
+            </div>
+        </div>
         <div id="help">
             <div class="row">
                 <h4>How to find information</h4>
@@ -131,9 +148,11 @@
                         The less the number the more sensitive is the missed dart detection.</p>
                 </div>
                 <div class="col s12">
-                    <p><b>Serial port</b> of your Arduino needs to be selected from the dropdown menu. If the port is not found please check like so:</p>
+                    <p><b>Serial port</b> of your Arduino needs to be selected from the dropdown menu. If the port is
+                        not found please check like so:</p>
                     <code>ls -la /dev/tty*</code>
-                    <p>Most of the time it is something like <i>/dev/ttyA**</i>. If it is not found please check you system.</p>
+                    <p>Most of the time it is something like <i>/dev/ttyA**</i>. If it is not found please check you
+                        system.</p>
                 </div>
             </div>
             <div class="row">
@@ -163,10 +182,25 @@
     </main>
 
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', function () {
             var elems = document.querySelectorAll('select');
             var instances = M.FormSelect.init(elems);
         });
+    </script>
+
+    <script>
+        function shutdown() {
+            if(confirm("Really shutdown system?")) {
+                let prot = window.location.protocol
+                let host = window.location.host
+                let url = prot+"//"+host+"/shutdown"
+                let div = document.querySelector("#shutdown-notice")
+                div.classList.remove("hide")
+                fetch(url, {
+                    method: "POST",
+                })
+            }
+        }
     </script>
 
     <script type="text/javascript" src="materialize.min.js"></script>

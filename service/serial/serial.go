@@ -14,6 +14,7 @@ import (
 type Serial struct {
 	SerialConfig *serial.Config
 	Connection   *serial.Port
+	Established  bool
 	Quit         chan int
 	Command      chan string
 	Message      chan string
@@ -55,6 +56,7 @@ func (s *Serial) Start() error {
 // read will infinitly read on the serial interface
 func (s *Serial) read(ctx context.Context) {
 	var err error
+	s.Established = false
 	// Connect via serial
 	s.Connection, err = serial.OpenPort(s.SerialConfig)
 	if err != nil {
@@ -62,6 +64,7 @@ func (s *Serial) read(ctx context.Context) {
 		config.Config.Machine.Error = err.Error()
 		return
 	}
+	s.Established = true
 
 	s.Write("s,9")
 	// Write the Piezo Threshold time to set it at Arduino side
@@ -76,6 +79,7 @@ func (s *Serial) read(ctx context.Context) {
 			close(s.Message)
 			close(s.Quit)
 			s.Connection.Close()
+			s.Established = false
 			return
 		default:
 			scanner.Scan()

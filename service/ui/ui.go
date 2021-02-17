@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"syscall"
 	"time"
 
 	"github.com/dascr/dascr-machine/service/config"
@@ -66,6 +67,7 @@ func (ws *WebServer) Start() error {
 	http.HandleFunc("/admin", ws.admin)
 	http.HandleFunc("/updateMachine", ws.updateMachine)
 	http.HandleFunc("/updateScoreboard", ws.updateScoreboard)
+	http.HandleFunc("/shutdown", ws.shutdown)
 	add := fmt.Sprintf("%+v:%+v", ws.IP, ws.Port)
 	ws.HTTPServer = &http.Server{
 		Addr: add,
@@ -246,6 +248,14 @@ func (ws *WebServer) updateScoreboard(w http.ResponseWriter, r *http.Request) {
 	// Redirect back to admin
 	time.Sleep(time.Second / 5)
 	http.Redirect(w, r, "/admin", http.StatusSeeOther)
+}
+
+func (ws *WebServer) shutdown(w http.ResponseWriter, r *http.Request) {
+	if r.Method == http.MethodPost {
+		logger.Debug("Shutdown signal received. Shutting down.")
+		syscall.Sync()
+		syscall.Reboot(syscall.LINUX_REBOOT_CMD_POWER_OFF)
+	}
 }
 
 // findArduino looks for the file that represents the Arduino

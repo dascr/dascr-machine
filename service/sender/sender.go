@@ -93,20 +93,22 @@ func (s *Sender) sendToScoreboard(url, method string) error {
 
 	json.NewDecoder(resp.Body).Decode(&state.GameState)
 
-	// Write state to Arduino
-	switch state.GameState.GameState {
-	case "THROW":
-		s.Serial.Write("s,1")
-	case "NEXTPLAYER":
-		s.Serial.Write("s,2")
-	case "BUST":
-		s.Serial.Write("s,2")
-	case "BUSTCONDITION":
-		s.Serial.Write("s,2")
-	case "BUSTNOCHECKOUT":
-		s.Serial.Write("s,2")
-	case "WON":
-		s.Serial.Write("s,5")
+	if s.Serial.Established {
+		// Write state to Arduino
+		switch state.GameState.GameState {
+		case "THROW":
+			s.Serial.Write("s,1")
+		case "NEXTPLAYER":
+			s.Serial.Write("s,2")
+		case "BUST":
+			s.Serial.Write("s,2")
+		case "BUSTCONDITION":
+			s.Serial.Write("s,2")
+		case "BUSTNOCHECKOUT":
+			s.Serial.Write("s,2")
+		case "WON":
+			s.Serial.Write("s,5")
+		}
 	}
 
 	return nil
