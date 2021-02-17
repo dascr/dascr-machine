@@ -200,6 +200,8 @@ void SetUltrasonicThreshold()
   int iTempDistance = ReadUltrasonicDistance();
   iUltrasonicThreshold = iTempDistance + 3;
   iUltrasonicThresholdMeasured = 1;
+  // Debounce cause otherwise wobbeling dart might directly trigger movement
+  delay(750);
 }
 
 void ProcessUltrasonic()
