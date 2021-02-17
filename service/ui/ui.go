@@ -10,8 +10,9 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
-	"syscall"
 	"time"
+
+	"golang.org/x/sys/unix"
 
 	"github.com/dascr/dascr-machine/service/config"
 	"github.com/dascr/dascr-machine/service/connector"
@@ -253,8 +254,10 @@ func (ws *WebServer) updateScoreboard(w http.ResponseWriter, r *http.Request) {
 func (ws *WebServer) shutdown(w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodPost {
 		logger.Debug("Shutdown signal received. Shutting down.")
-		syscall.Sync()
-		syscall.Reboot(syscall.LINUX_REBOOT_CMD_POWER_OFF)
+		// syscall.Sync()
+		// syscall.Reboot(int(syscall.LINUX_REBOOT_CMD_HALT))
+		h := uint(unix.LINUX_REBOOT_CMD_HALT)
+		unix.Reboot(int(h))
 	}
 }
 
