@@ -85,7 +85,19 @@ func (g *Game) processCommand(cmd string) {
 			if state.GameState.GameState == "WON" {
 				g.Sender.Rematch()
 			} else {
+				// If not all darts have hit the board but button is pressed
+				// this will most likely apply when not having piezos in place
+				// or if a dart will not find its way all to the front hitting either the board or the case
+				if state.GameState.GameState == "THROW" {
+					// Write 3 to serial
+					// This will make the machine blink
+					g.Serial.Write("s,3")
+					// Write timeout and let the machine blink
+					time.Sleep(g.WaitingTime)
+				}
 				g.Sender.NextPlayer()
+				// Setting the time after nextPlayer to debounce multiple "u"'s
+				g.NextPlayerTime = time.Now()
 			}
 			break
 		case "u":
