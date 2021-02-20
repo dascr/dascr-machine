@@ -207,11 +207,22 @@ void SetUltrasonicThreshold()
 
 void ProcessUltrasonic()
 {
-  int iTempDistance = ReadUltrasonicDistance();
+  ReadUltrasonicDistance();
   if (iDistance > iUltrasonicThreshold)
   {
     Serial.println("u");
   }
+}
+
+void SetMotion()
+{
+  iMotionDetected = 1;
+}
+
+void ResetMotion()
+{
+  iUltrasonicThresholdMeasured = 0;
+  iMotionDetected = 0;
 }
 
 void RecvWithStartEndMarkers()
@@ -341,16 +352,6 @@ void ProcessSerial()
   }
 }
 
-void SetMotion()
-{
-  iMotionDetected = 1;
-}
-
-void ResetMotion()
-{
-  iUltrasonicThresholdMeasured = 0;
-  iMotionDetected = 0;
-}
 
 void DetectMotion()
 {
