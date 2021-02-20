@@ -12,6 +12,7 @@ var (
 		Machine: MachineConfig{
 			WaitingTime: 5,
 			Piezo:       20,
+			Wobble:      750,
 			Serial:      "/dev/ttyACM0",
 		},
 		Scoreboard: ScoreboardConfig{
@@ -40,6 +41,7 @@ type Settings struct {
 type MachineConfig struct {
 	WaitingTime int    `json:"wait"`
 	Piezo       int    `json:"piezo"`
+	Wobble      int    `json:"wobble"`
 	Serial      string `json:"serial"`
 	Error       string `json:"-"`
 }

@@ -41,6 +41,12 @@
                     </div>
 
                     <div class="input-field col s6">
+                        <input id="wobble" name="wobble" type="number" value="{{.Config.Machine.Wobble}}"
+                            class="validate" />
+                        <label>Ultrasonic Dartwobble Debounce Time (ms)</label>
+                    </div>
+
+                    <div class="input-field col s6">
                         <select id="serial" name="serial">
                             {{ range .SerialList }}
                             <option value="{{.}}">{{.}}</option>
@@ -57,11 +63,12 @@
                     </div>
                 </form>
             </div>
-            {{if (ne .Config.Machine.Error "") }}
-            <div id="machine-error" class="card-panel red darken-4 z-depth-2">
-                <p class="white-text">ERROR: {{.Config.Machine.Error}}</p>
-            </div>
-            {{ end }}
+        </div>
+        {{if (ne .Config.Machine.Error "") }}
+        <div id="machine-error" class="card-panel red darken-4 z-depth-2">
+            <p class="white-text">ERROR: {{.Config.Machine.Error}}</p>
+        </div>
+        {{ end }}
         </div>
         <div id="scoreboard">
             <h4>Scoreboard Config</h4>
@@ -125,27 +132,30 @@
         <div id="control">
             <div class="row">
                 <h4>Control System</h4>
-                    <div class="col s6">
-                        <button class="btn waves-effect waves-light" onclick="shutdown()">
-                            <i class="material-icons left">power_settings_new</i>
-                            Shutdown System
-                        </button>
-                    </div>
-                    <div class="col s6 hide" id="shutdown-notice">
-                        <p class="red-text"><b>System is shutting down</b></p>
-                    </div>
+                <div class="col s6">
+                    <button class="btn waves-effect waves-light" onclick="shutdown()">
+                        <i class="material-icons left">power_settings_new</i>
+                        Shutdown System
+                    </button>
+                </div>
+                <div class="col s6 hide" id="shutdown-notice">
+                    <p class="red-text"><b>System is shutting down</b></p>
+                </div>
             </div>
         </div>
         <div id="help">
             <div class="row">
                 <h4>How to find information</h4>
-                <div class="col s6">
+                <div class="col s4">
                     <p><b>Delay time</b> will be the time the machine will wait to switch to the next player after
                         registering movement with the ultrasonic sensor.</p>
                 </div>
-                <div class="col s6">
+                <div class="col s4">
                     <p><b>Piezo Threshold</b> will control the sensitivity of the piezo sensors triggering missed darts.
                         The less the number the more sensitive is the missed dart detection.</p>
+                </div>
+                <div class="col s4">
+                    <p><b>Ultrasonic Dartwobble Debounce Time</b> will be the time the ultrasonic sensor will wait to look for movement after 3 darts hit the board. So you can deploy a delay here if your last dart regularly triggers the ultrasonic sensor automatically.</p>
                 </div>
                 <div class="col s12">
                     <p><b>Serial port</b> of your Arduino needs to be selected from the dropdown menu. If the port is
@@ -190,10 +200,10 @@
 
     <script>
         function shutdown() {
-            if(confirm("Really shutdown system?")) {
+            if (confirm("Really shutdown system?")) {
                 let prot = window.location.protocol
                 let host = window.location.host
-                let url = prot+"//"+host+"/shutdown"
+                let url = prot + "//" + host + "/shutdown"
                 let div = document.querySelector("#shutdown-notice")
                 div.classList.remove("hide")
                 fetch(url, {

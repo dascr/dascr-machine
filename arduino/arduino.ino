@@ -43,6 +43,7 @@ int iDistance;
 int iUltrasonicThreshold = 0;
 int iMotionDetected = 0;
 int iUltrasonicThresholdMeasured = 0;
+int iDebounceWobbleTime = 750;
 // Input String from Raspberry Pi to Arduino
 const byte numChars = 32;
 char cInputChars[numChars];
@@ -201,7 +202,7 @@ void SetUltrasonicThreshold()
   iUltrasonicThreshold = iTempDistance + 3;
   iUltrasonicThresholdMeasured = 1;
   // Debounce cause otherwise wobbeling dart might directly trigger movement
-  delay(750);
+  delay(iDebounceWobbleTime);
 }
 
 void ProcessUltrasonic()
@@ -285,6 +286,10 @@ void ProcessSerial()
     {
       // if p set new piezo threshold
       iPiezoThreshold = iParam;
+    }
+    else if (strcmp(cCommand, "u") == 0) {
+      // if u set new debounce wobble time
+      iDebounceWobbleTime = iParam;
     }
     else if (strcmp(cCommand, "s") == 0)
     {

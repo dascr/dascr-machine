@@ -65,11 +65,15 @@ func (s *Serial) read(ctx context.Context) {
 		return
 	}
 	s.Established = true
+	config.Config.Machine.Error = ""
 
 	s.Write("s,9")
 	// Write the Piezo Threshold time to set it at Arduino side
 	threshold := fmt.Sprintf("p,%+v", config.Config.Machine.Piezo)
 	s.Write(threshold)
+	// Write the debounce wobble time to set it at Arduino side
+	wobble := fmt.Sprintf("u,%+v", config.Config.Machine.Wobble)
+	s.Write(wobble)
 
 	scanner := bufio.NewScanner(s.Connection)
 

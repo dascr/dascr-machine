@@ -133,7 +133,14 @@ func (ws *WebServer) updateMachine(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	usThreshold, err := strconv.Atoi(r.FormValue(("thresh")))
+	pzThreshold, err := strconv.Atoi(r.FormValue("thresh"))
+	if err != nil {
+		logger.Errorf("Invalid form input: %+v", err)
+		http.Error(w, "Error when updating machine settings", http.StatusBadRequest)
+		return
+	}
+
+	usWobble, err := strconv.Atoi(r.FormValue("wobble"))
 	if err != nil {
 		logger.Errorf("Invalid form input: %+v", err)
 		http.Error(w, "Error when updating machine settings", http.StatusBadRequest)
@@ -151,13 +158,21 @@ func (ws *WebServer) updateMachine(w http.ResponseWriter, r *http.Request) {
 		connector.MachineConnector.Game.DebounceTime = d
 		logger.Debugf("Changed Waiting time and Debounce time of Connector to: %+v and %+v", connector.MachineConnector.Game.WaitingTime, connector.MachineConnector.Game.DebounceTime)
 	}
-	if config.Config.Machine.Piezo != usThreshold {
+	if config.Config.Machine.Piezo != pzThreshold {
 		// set it in config
-		config.Config.Machine.Piezo = usThreshold
+		config.Config.Machine.Piezo = pzThreshold
 		// Write the Piezo Threshold time to set it at Arduino side
-		threshold := fmt.Sprintf("p,%+v", usThreshold)
+		threshold := fmt.Sprintf("p,%+v", pzThreshold)
 		connector.MachineConnector.Serial.Write(threshold)
 		logger.Debugf("Changed Piezo Threshold to: %+v and wrote it to serial port", config.Config.Machine.Piezo)
+	}
+	if config.Config.Machine.Wobble != usWobble {
+		// set it in config
+		config.Config.Machine.Wobble = usWobble
+		// Write the wobble debounce time to set it at Arduino side
+		delay := fmt.Sprintf("u,%+v", usWobble)
+		connector.MachineConnector.Serial.Write(delay)
+		logger.Debugf("Changed wobble debounce time to: %+v and wrote it to serial port", config.Config.Machine.Wobble)
 	}
 	if config.Config.Machine.Serial != r.FormValue("serial") {
 		// set it in config
