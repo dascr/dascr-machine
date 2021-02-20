@@ -1,3 +1,4 @@
 service/config.json
 service/dist
 .vscode
+arduino/build*
